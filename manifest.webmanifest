@@ -1,0 +1,20 @@
+{
+  "id": "./",
+  "name": "Of Oil & Iron Companion",
+  "short_name": "Oil & Iron",
+  "description": "Unofficial squadron builder and campaign companion.",
+  "lang": "en",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#15191a",
+  "theme_color": "#15191a",
+  "icons": [
+    {
+      "src": "icons/app-icon.png",
+      "sizes": "1254x1254",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

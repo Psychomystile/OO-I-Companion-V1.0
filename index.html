@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#15191a">
+  <meta name="description" content="Unofficial companion for building squadrons and using interactive Of Oil and Iron rig sheets.">
+  <title>Of Oil & Iron · Companion</title>
+  <link rel="icon" type="image/png" sizes="1254x1254" href="icons/app-icon.png">
+  <link rel="apple-touch-icon" href="icons/app-icon.png">
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Oil &amp; Iron">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <link rel="stylesheet" href="style.css">
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <header class="masthead">
+    <div><span class="eyebrow">UNOFFICIAL COMPANION</span><h1>OF OIL <span>&</span> IRON</h1></div>
+    <span class="version">RULEBOOK V1 · 0.7.1</span>
+  </header>
+  <nav class="tabs" aria-label="Mode">
+    <button id="build-tab" class="active" data-action="view" data-value="build">01 <span>Build squadron</span></button>
+    <button id="battle-tab" data-action="view" data-value="battle">02 <span>Battle sheets</span></button>
+    <button id="campaign-tab" hidden data-action="view" data-value="campaign">03 <span>Campaign</span></button>
+  </nav>
+  <main id="app"></main>
+  <footer><span>Of Oil and Iron by Scott Hadley / Scoutsifer Studio.</span><span>Profiles from Rulebook V1, pp. 45–90. Unofficial fan project.</span></footer>
+  <div id="notice" role="status" aria-live="polite"></div>
+  <noscript>Enable JavaScript in your browser to use the companion.</noscript>
+</body>
+</html>
