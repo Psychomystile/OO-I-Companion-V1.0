@@ -1951,7 +1951,7 @@ function configErrors(r){
  for(const id of r.equipment){if([0,1,5].includes(id)){const slot=r.targets[id];if(slot===undefined||r.weapons[slot]===null||isMelee(rig.weapons[r.weapons[slot]]))errors.push(`Assign ${DATA.equipment[id].name} to a ranged weapon.`);}}
  return errors;
 }
-function freshBattle(r){const rig=rigOf(r);return {rerollsUsed:0,sp:[...rig.sp],parts:['ok','ok','ok','ok'],ruptured:[false,false,false,false],heat:0,actions:0,activated:false,conditions:[],weaponState:['ready','ready','ready'],spent:[],notes:''};}
+function freshBattle(r){const rig=rigOf(r);return {rerollsUsed:0,actionHeat:1,actionHistory:[],sp:[...rig.sp],parts:['ok','ok','ok','ok'],ruptured:[false,false,false,false],heat:0,actions:0,activated:false,conditions:[],weaponState:['ready','ready','ready'],spent:[],notes:''};}
 function formationErrors(){const f=FORMATIONS[state.formation][1];if(!f)return [];const counts=Object.keys(WEIGHTS).map(w=>state.squad.filter(r=>rigOf(r).weight===w).length);return counts.flatMap((n,i)=>n===f[i]?[]:[`${WEIGHTS[Object.keys(WEIGHTS)[i]]}: ${n}/${f[i]}`]);}
 let menuScreen='home';
 let workspaces={activeId:uid(),entries:[]};
@@ -1966,7 +1966,7 @@ function weaponInfo(w){return `<div class="weapon-info"><b>ROF ${w.rof} · STR $
 function baseBuildView(){
  const rig=rigOf(draft);const available=DATA.rigs.filter(r=>r.faction===state.faction||(!isCampaign()&&r.faction==='nomads'));
  return `<div class="toolbar"><div><h2>Your squadron</h2><p class="small" id="save-state">${storageOK?'Automatically saved in this browser':'Saving unavailable'}</p></div><input aria-label="Squadron name" maxlength="60" data-field="squad-name" value="${esc(state.name)}"></div>
- ${modePanel()}<div class="build-layout"><section class="panel"><span class="eyebrow">01 / FACTION AND RIG</span><div class="factions">${FACTIONS.filter(([id])=>id!=='nomads').map(([id,n])=>`<button data-action="faction" data-value="${id}" aria-pressed="${id===state.faction}" class="${id===state.faction?'selected':''}">${n}</button>`).join('')}</div>
+ ${engagementSelector()}${modePanel()}<div class="build-layout"><section class="panel"><span class="eyebrow">01 / FACTION AND RIG</span><div class="factions">${FACTIONS.filter(([id])=>id!=='nomads').map(([id,n])=>`<button data-action="faction" data-value="${id}" aria-pressed="${id===state.faction}" class="${id===state.faction?'selected':''}">${n}</button>`).join('')}</div>
  ${rigCatalog(available)}
  <div class="config"><hr class="divider"><span class="eyebrow">02 / LOADOUT</span><div class="section-top"><h2>${editing?'Edit':'Configure'} ${rig.name}</h2><span class="badge">p. ${rig.page}</span></div>
  ${stats([[rig.speed+'″','Speed'],[rig.exhaust,'Exhaust'],[ironCapacity(draft),'Iron Capacity'],[WEIGHTS[rig.weight],'Weight class']])}
@@ -1990,29 +1990,96 @@ function partHint(b,i){
  const disabled=b.parts[i]==='disabled';
  return [disabled?'Permanently Stalled and Shocked.':'Permanently Stalled; Hull weapons cannot be used.',disabled?'Both weapons cannot be used.':'Roll D12: 1–6 Left Weapon, 7–12 Right Weapon can no longer be used.',disabled?'Permanently Immobilised; may Pivot.':'Apply Slowed.',disabled?'Heat cannot decrease.':'Raise Heat to the Heat Threshold if below it; Heat can no longer fall below the threshold.'][i];
 }
-function battleCard(r){const rig=effectiveRig(r),b=r.battle,destroyed=b.parts.filter(x=>x==='disabled').length>=2;
- return `<article class="panel battle-card ${b.activated?'activated':''} ${destroyed?'destroyed':''}" data-card="${r.id}"><div class="card-heading"><div><span class="eyebrow">${rig.name.toUpperCase()} · ${WEIGHTS[rig.weight].toUpperCase()}${rig.faction==='nomads'?' · NOMAD':''}</span><h2>${esc(r.name)}</h2></div><button data-action="activated" data-id="${r.id}" aria-pressed="${b.activated}">${b.activated?'✓ Activated':'Not activated'}</button></div>
+// Action history stores actual Heat added, including clamping at maximum Heat.
+function permanentConditions(b){const c=[];if(b.parts[0]!=='ok')c.push('Stalled');if(b.parts[0]==='disabled')c.push('Shocked');if(b.parts[2]==='catastrophic')c.push('Slowed');if(b.parts[2]==='disabled')c.push('Immobilised');return c;}
+function activeConditions(r){return [...new Set([...(r.battle.conditions||[]),...permanentConditions(r.battle)])];}
+function actionLimit(r){return r.battle.skipActivation||r.battle.parts.filter(p=>p==='disabled').length>=2?0:activeConditions(r).includes('Stalled')?3:5;}
+function battleProfile(r){const rig=effectiveRig(r),c=activeConditions(r);rig.speed=Math.max(1,rig.speed-(c.includes('Shocked')?1:0)-(c.includes('Slowed')?2:0));rig.immobilised=c.includes('Immobilised');rig.conditionACC=c.includes('Shocked')?-1:0;return rig;}
+function namedActionHeat(r,name,slot){if(r.battle.manualActionHeat)return Number(r.battle.actionHeat??1);const weapon=effectiveRig(r).weapons[r.weapons[slot]];return name==='Fire'&&weapon&&/\bCold\b/i.test(weapon.perks)?0:1;}
+function syncComponentDamage(r,old){const b=r.battle;b.conditions=[...new Set([...b.conditions,...permanentConditions(b)])];
+ if(b.parts[0]!=='ok')b.weaponState[2]='disabled';
+ if(b.parts[1]==='disabled'){b.weaponState[0]='disabled';b.weaponState[1]='disabled';b.pendingArm=false;}
+ else if(b.parts[1]==='catastrophic'&&old?.parts[1]==='ok')b.pendingArm=true;
+ else if(b.parts[1]==='ok')b.pendingArm=false;
+ if(b.parts[3]==='catastrophic')b.heat=Math.max(b.heat,effectiveRig(r).heat.findIndex(x=>x!==null));
+}
+function pendingArmView(r){return r.battle.pendingArm?`<section class="panel damage-yellow"><strong>Damaged Arms · resolve weapon loss</strong><p class="small">D12: 1–6 left weapon; 7–12 right weapon. Resolve before attacking.</p><div class="row"><input type="number" min="1" max="12" aria-label="Damaged Arms D12" id="arm-loss-${r.id}"><button data-arm-loss="${r.id}">Apply D12</button><button data-arm-loss="${r.id}" data-random="yes">Roll D12 & apply</button></div></section>`:'';}
+function spendAction(r,delta,heatCost=null){
+ const b=r.battle;if(b.skipActivation)return;
+ b.actionHistory??=[];
+ if(delta>0&&b.actions<actionLimit(r)&&!b.activated){
+  b.activationConditions??=[...b.conditions];
+  const previous=b.heat,cost=Math.max(0,Math.min(9,Number(heatCost??b.actionHeat??1)||0));
+  b.heat=Math.min(effectiveRig(r).heat.length-1,b.heat+cost);
+  b.actionHistory.push({action:b.actions+1,heat:b.heat-previous});b.actions++;
+ }else if(delta<0&&b.actions>0){
+  const last=b.actionHistory.at(-1);
+  if(last?.action===b.actions){b.heat=Math.max(0,b.heat-last.heat);b.actionHistory.pop();}
+  b.actions--;
+ }
+}
+function toggleActivation(r){
+ const b=r.battle;if(b.skipActivation){notify('This Rig must skip this activation after Emergency Shutdown.');return;}b.activated=!b.activated;
+ if(b.activated){b.expiredConditions=[...(b.activationConditions||b.conditions)].filter(c=>!permanentConditions(b).includes(c));b.conditions=b.conditions.filter(c=>!b.expiredConditions.includes(c));b.activationConditions=null;b.weaponState=b.weaponState.map(w=>w==='reload'?'ready':w);}else{b.conditions=[...new Set([...b.conditions,...(b.expiredConditions||[])])];b.expiredConditions=[];}
+}
+function pilotBattleHeader(r){
+ const p=pilotOf(r);
+ return `<section class="pilot-battle-header"><strong>${esc((isCampaign()?r.campaign?.pilotName:r.ironcladName)||'Ironclad')}</strong><span class="badge">${p.name} · Aim ${p.aim}+ · Aim target modifier ${p.aim-6}</span>${campaignRigInfo(r)}</section>`;
+}
+function finishNormalGame(){
+ if(isCampaign())return;
+ if(!confirm('Finish this normal game? All Rigs will be restored, with fresh trackers. Squadron names, Ironclads and loadouts will be kept.'))return;
+ for(const r of state.squad)r.battle=freshBattle(r);
+ state.round=1;state.engagementEnded=false;state.maintenance=null;state.view='build';menuScreen='normal';battleUndo.delete(workspaces.activeId);render();notify('Game finished. Your squadron is restored and ready to reuse.');
+}
+const ENGAGEMENTS=[
+ ['iron-clash','Iron Clash',0,false,'Ends early when only one Squadron remains.'],
+ ['high-value-target','High Value Target',0,false,'Ends early when only one High Value Target remains.'],
+ ['point-of-control','Point of Control',0,false,'Score objectives at the end of each round.'],
+ ['total-command','Total Command',0,false,'Ends early when one player controls both objectives at round end.'],
+ ['push-the-line','Push the Line',0,false,'Score enemy-territory positions at the start of each round.'],
+ ['supply-airdrop','Supply Airdrop',5,false,'Place the objective at the start of round 2.'],
+ ['salvage-heist','Salvage Heist',0,false,'Salvage objectives are worth 2 VP.'],
+ ['sabotage','Sabotage',4,false,'Ends early when all opposing objectives are destroyed.'],
+ ['ambush','Ambush',0,true,'Special Engagement.'],['hold-the-line','Hold the Line',4,true,'Special Engagement.'],
+ ['breakthrough','Breakthrough',0,true,'Special Engagement.'],['siege','Siege',0,true,'Special Engagement.']];
+function availableEngagements(){return ENGAGEMENTS;}
+function currentEngagement(){return availableEngagements().find(e=>e[0]===state.engagement)||ENGAGEMENTS[0];}
+function engagementDuration(e){return e[2]?e[2]+' rounds':'4–6 rounds';}
+function engagementSelector(){const e=currentEngagement(),locked=isCampaign()&&state.campaign?.phase==='battle';return `<section class="panel" style="margin-bottom:16px"><h3>Engagement</h3><div class="row"><select aria-label="Engagement" data-field="engagement" ${locked?'disabled':''}>${options(availableEngagements().map(e=>[e[0],e[1]+(e[3]?' · Special':'')+' · '+engagementDuration(e)]),e[0])}</select><button data-engagement-random ${locked?'disabled':''}>Random Engagement</button></div><p class="small">${e[1]} · ${engagementDuration(e)}. ${e[2]?'': 'End of round 4: D12 8+ ends the game. Round 5: 5+. Round 6: automatic end.'} ${e[4]}</p></section>`;}
+function needsEndRoll(){return !currentEngagement()[2]&&[4,5].includes(state.round);}
+function engagementEndPanel(){const e=currentEngagement();return `<section class="component"><h3>${e[1]} · ${engagementDuration(e)}</h3>${needsEndRoll()?`<p>End of round ${state.round}: D12 ${state.round===4?'8+':'5+'} ends the Engagement.</p><div class="row"><input aria-label="Engagement end D12" type="number" min="1" max="12" data-field="end-die" value="${state.maintenance.endDie||''}"><button data-end-roll>Roll D12</button></div>`:`<p>${state.round>=(e[2]||6)?'This is the final round.':'The Engagement continues unless an early victory condition is met.'}</p>`}<label class="checkline"><input type="checkbox" data-field="early-end" ${state.maintenance.earlyEnd?'checked':''}>Scenario victory condition reached · end Engagement</label></section>`;}
+function componentColour(b,i){return b.parts[i]==='disabled'?'damage-red':b.parts[i]==='catastrophic'||b.sp[i]===0?'damage-yellow':'';}
+function rigBanner(r){const rig=rigOf(r);return `<div class="rig-banner"><img src="images/rigs/${rig.id}.webp" alt="${esc(rig.name)} Rig" width="893" height="380" loading="lazy" decoding="async"><div class="rig-banner-caption"><span class="eyebrow">${esc(rig.name)} · ${WEIGHTS[rig.weight]}${rig.faction==='nomads'?' · NOMAD':''}</span><h2>${esc(r.name)}</h2></div></div>`;}
+
+let rupturePickerId=null;
+function statusButtons(r){const b=r.battle,active=activeConditions(r),permanent=permanentConditions(b);return `<section class="status-header" aria-label="Rig conditions"><div class="status-buttons">${Object.keys(CONDITIONS).map(c=>`<button class="status-button ${active.includes(c)?'status-active':''}" data-action="condition" data-id="${r.id}" data-value="${c}" aria-pressed="${active.includes(c)}" title="${esc(CONDITIONS[c])}${permanent.includes(c)?' Permanent component effect.':''}" ${permanent.includes(c)?'disabled':''}><img src="images/status/${c.toLowerCase()}.webp" alt="" width="48" height="44"><span>${c}</span><small>${permanent.includes(c)?'Permanent':active.includes(c)?'Active':'Off'}</small></button>`).join('')}<button class="status-button ${b.ruptured.some(Boolean)?'status-active':''}" data-rupture-picker="${r.id}" aria-expanded="${rupturePickerId===r.id}" aria-pressed="${b.ruptured.some(Boolean)}"><img src="images/status/ruptured.webp" alt="" width="48" height="44"><span>Ruptured</span><small>${b.ruptured.filter(Boolean).length||'Off'}${b.ruptured.some(Boolean)?' parts':''}</small></button></div>${rupturePickerId===r.id?`<div class="rupture-picker"><strong>Ruptured components</strong><p class="small">2 damage per affected component during Maintenance; persists until repaired.</p><div class="row">${PARTS.map((part,i)=>`<label class="checkline"><input type="checkbox" data-field="ruptured" data-id="${r.id}" data-part="${i}" ${b.ruptured[i]?'checked':''}>${part}</label>`).join('')}</div></div>`:''}${active.length?`<details><summary>Active condition effects</summary>${active.map(c=>`<p class="small"><b>${c}:</b> ${CONDITIONS[c]}${permanent.includes(c)?' Permanent while this component is damaged.':''}</p>`).join('')}</details>`:''}</section>`;}
+function battleCard(r){const rig=battleProfile(r),b=r.battle,destroyed=b.parts.filter(x=>x==='disabled').length>=2;
+ return `<article class="panel battle-card ${activeRigId()===r.id?'selected-rig':''} ${b.activated?'activated':''} ${destroyed?'destroyed':''}" data-card="${r.id}">${rigBanner(r)}${statusButtons(r)}<div class="card-heading"><div><span class="eyebrow">${rig.name.toUpperCase()} · ${WEIGHTS[rig.weight].toUpperCase()}${rig.faction==='nomads'?' · NOMAD':''}</span></div><button data-action="activated" data-id="${r.id}" aria-pressed="${b.activated}">${b.activated?'✓ Activated':'Not activated'}</button></div>
+ ${pilotBattleHeader(r)}
  ${destroyed?'<p class="warning danger">DESTROYED · check for explosion (Rulebook p. 33).</p>':''}
- ${stats([[pilotOf(r).aim+'+','Aim'],[rig.speed+'″','SPD'],[rig.exhaust,'Exhaust'],[cost(r)+'/'+ironCapacity(r),'Iron']])}
+ ${stats([[pilotOf(r).aim+'+','Aim'],[rig.immobilised?'Pivot only':rig.speed+'″','Current SPD'],[rig.conditionACC,'Condition ACC'],[rig.exhaust,'Exhaust'],[cost(r)+'/'+ironCapacity(r),'Iron']])}
  <div class="track-label"><strong>Heat</strong><span class="badge">${b.heat} ${rig.heat[b.heat]===null?'· safe':`· roll D12 +${rig.heat[b.heat]}`}</span></div>
  <div class="heat-track" aria-label="Heat Track">${rig.heat.map((h,i)=>`<button class="${h===null?'':'hot'} ${b.heat===i?'current':''}" data-action="heat" data-id="${r.id}" data-value="${i}" aria-label="Heat ${i}, ${h===null?'safe':'modifier +'+h}" aria-pressed="${b.heat===i}">${h===null?'−':'+'+h}</button>`).join('')}</div>
  ${rig.heat[b.heat]!==null?`<p class="warning">Make a Heat Threshold roll during Maintenance.${b.heat===rig.heat.length-1?' At maximum Heat, also roll for each Action.':''}</p>`:''}
- <div class="track-label"><span>Actions used <span class="small">/ 5 base Actions</span></span>${counter(r.id,'actions',b.actions,5)}</div>
- <div class="components">${PARTS.map((p,i)=>`<section class="component"><div class="component-head"><div><strong>${p}</strong><span class="small">Base Armour ${rig.armour[i]}+</span></div>${counter(r.id,'sp',b.sp[i],rig.sp[i],i)}</div><select aria-label="${p} status" data-field="part-state" data-id="${r.id}" data-part="${i}">${options([['ok','Operational'],['catastrophic','Catastrophically Damaged'],['disabled','Disabled']],b.parts[i])}</select>${b.parts[i]!=='ok'?`<p class="small danger">${partHint(b,i)} Cannot be Repaired.</p>`:''}<label class="checkline"><input type="checkbox" data-field="ruptured" data-id="${r.id}" data-part="${i}" ${b.ruptured[i]?'checked':''}>Ruptured · 2 damage during Maintenance</label></section>`).join('')}</div>
- <details class="battle-weapons" open><summary>Weapons and Ironclad · ${pilotOf(r).name}</summary><p class="small">Base profiles. Apply modifiers at the table. Changing reload status does not spend Actions or change Heat.</p>${r.weapons.map((w,slot)=>w===null?'':`<section class="weapon-card ${b.weaponState[slot]==='disabled'?'unavailable':''}"><span class="eyebrow">${SLOTS[slot]}</span><h3>${rig.weapons[w].name}</h3><span class="badge">${weaponGroupName(rig.weapons[w])} · p. ${rig.weapons[w].page}</span>${stats([[rig.weapons[w].rof,'ROF'],[rig.weapons[w].str,'STR'],[rig.weapons[w].rng+'″','RNG'],[rig.weapons[w].acc,'ACC']])}<p class="small">${esc(rig.weapons[w].perks)}</p><select aria-label="${SLOTS[slot]} status" data-field="weapon-state" data-id="${r.id}" data-slot="${slot}">${options([['ready','Ready'],...(!isMelee(rig.weapons[w])?[['reload','Reload required']]:[]),['disabled','Cannot be used']],b.weaponState[slot])}</select></section>`).join('')}</details>
- ${campaignRigInfo(r)}<strong>Conditions</strong><div class="conditions">${Object.keys(CONDITIONS).map(c=>`<button class="${b.conditions.includes(c)?'on':''}" data-action="condition" data-id="${r.id}" data-value="${c}" aria-pressed="${b.conditions.includes(c)}">${c}</button>`).join('')}</div>${b.conditions.map(c=>`<p class="small"><b>${c}:</b> ${CONDITIONS[c]}</p>`).join('')}
+ <div class="track-label"><span>Actions used <span class="small">/ ${actionLimit(r)} available Actions</span></span>${counter(r.id,'actions',b.actions,actionLimit(r))}</div>
+ ${pendingArmView(r)}<label class="checkline"><input type="checkbox" data-field="manual-action-heat" data-id="${r.id}" ${b.manualActionHeat?'checked':''}>Override named-action Heat for special effects</label><label class="field action-heat"><span>Manual Heat · counter + / named-action override</span><select data-field="action-heat" data-id="${r.id}">${options(Array.from({length:10},(_,i)=>[i,i===0?'0 · no Heat':`+${i} Heat`]),b.actionHeat??1)}</select></label><p class="small">+ spends one Action and adds the selected Heat. − undoes its recorded Heat. You can still select Heat manually. Activated ends this Rig's activation, expires temporary conditions present when it started and reloads usable weapons; unused Actions generate no Heat.</p>
+ <p class="small damage-legend"><span>Yellow: 0 SP / catastrophic damage</span> · <span>Red: permanently disabled / unusable</span></p><div class="components">${PARTS.map((p,i)=>`<section class="component ${componentColour(b,i)}"><div class="component-head"><div><strong>${p}</strong><span class="small">Base Armour ${rig.armour[i]}+</span></div>${counter(r.id,'sp',b.sp[i],rig.sp[i],i)}</div><select aria-label="${p} status" data-field="part-state" data-id="${r.id}" data-part="${i}">${options([['ok','Operational'],['catastrophic','Catastrophically Damaged'],['disabled','Disabled']],b.parts[i])}</select>${b.parts[i]!=='ok'?`<p class="small danger">${partHint(b,i)} Cannot be Repaired.</p>`:''}<label class="checkline"><input type="checkbox" data-field="ruptured" data-id="${r.id}" data-part="${i}" ${b.ruptured[i]?'checked':''}>Ruptured · 2 damage during Maintenance</label></section>`).join('')}</div>
+ <details class="battle-weapons"><summary>Weapons and Ironclad · ${pilotOf(r).name}</summary><p class="small">Base weapon profiles. Apply Condition ACC shown above once, plus Equipment and scenario modifiers. Changing reload status does not spend Actions or change Heat.</p>${r.weapons.map((w,slot)=>w===null?'':`<section class="weapon-card ${b.weaponState[slot]==='disabled'?'unavailable damage-red':''}"><span class="eyebrow">${SLOTS[slot]}</span>${b.weaponState[slot]==='disabled'?'<strong class="unusable-label">UNUSABLE</strong>':''}<h3>${rig.weapons[w].name}</h3><span class="badge">${weaponGroupName(rig.weapons[w])} · p. ${rig.weapons[w].page}</span>${stats([[rig.weapons[w].rof,'ROF'],[rig.weapons[w].str,'STR'],[rig.weapons[w].rng+'″','RNG'],[rig.weapons[w].acc,'ACC']])}<p class="small">${esc(rig.weapons[w].perks)}</p><select aria-label="${SLOTS[slot]} status" data-field="weapon-state" data-id="${r.id}" data-slot="${slot}">${options([['ready','Ready'],...(!isMelee(rig.weapons[w])?[['reload','Reload required']]:[]),['disabled','Cannot be used']],b.weaponState[slot])}</select></section>`).join('')}</details>
+
  <details><summary>Equipment (${r.equipment.length})</summary>${r.equipment.length?r.equipment.map(id=>{const e=DATA.equipment[id];return `<div class="equipment-row"><strong>${e.name}</strong>${id===35?`<p class="small">Extra Iron Capacity: ${esc(state.squad.find(x=>x.id===(r.capacityTarget||r.id))?.name||'Select a Rig')}</p>`:''}${r.targets[id]!==undefined?`<p class="small">Assigned to: ${SLOTS[r.targets[id]]}</p>`:''}<p>${esc(e.effect)}</p>${/Discard/i.test(e.effect)?`<label class="checkline"><input type="checkbox" data-field="spent" data-id="${r.id}" data-value="${id}" ${b.spent.includes(id)?'checked':''}>Used / discarded</label>`:''}</div>`;}).join(''):'<p class="small">No Equipment.</p>'}</details>
- <label class="field"><span>Notes · Preparations, permanent effects, targets</span><textarea data-field="notes" data-id="${r.id}" maxlength="2000" placeholder="E.g. Brace prepared; skip the next activation…">${esc(b.notes)}</textarea></label></article>`;
+ <details><summary>Notes & preparations</summary><label class="field"><span>Preparations, permanent effects, targets</span><textarea data-field="notes" data-id="${r.id}" maxlength="2000" placeholder="E.g. Brace prepared; skip the next activation…">${esc(b.notes)}</textarea></label></details></article>`;
 }
-function counter(id,kind,value,max,part=''){return `<div class="counter"><button aria-label="Decrease ${kind==='sp'?PARTS[part]:'Actions used'}" data-action="counter" data-id="${id}" data-kind="${kind}" data-part="${part}" data-value="-1" ${value<=0?'disabled':''}>−</button><strong>${value}<span class="small">/${max}</span></strong><button aria-label="Increase ${kind==='sp'?PARTS[part]:'Actions used'}" data-action="counter" data-id="${id}" data-kind="${kind}" data-part="${part}" data-value="1" ${value>=max?'disabled':''}>+</button></div>`;}
-function baseBattleView(){return `<div class="toolbar"><div><span class="eyebrow">${esc(state.name)}</span><h2>Round ${state.round}</h2><p class="small">Manual trackers · resolve modifiers and effects at the table.</p></div><div class="row"><button data-action="reset-battle" ${!state.squad.length||campaignStarted()?'disabled':''}>Restart battle</button><button class="primary" data-action="next-round" ${!state.squad.length?'disabled':''}>Next round</button></div></div>
- ${state.squad.length?`<div class="battle-grid">${deployedRigs().map(battleCard).join('')}</div>`:'<div class="empty"><strong>No battle sheets</strong>Build and confirm a squadron to begin.</div>'}
- <details class="panel" style="margin-top:20px"><summary>Heat Threshold reference and round management</summary><p class="small">Roll D12 and add the modifier for the current space. Apply the effects, then resolve Exhaust and Ruptured. Next round resets only Actions used and activation markers: Heat, Conditions and damage remain unchanged.</p><table class="reference-table"><tbody>${HEAT_RESULTS.map(([n,t])=>`<tr><td>${n}</td><td>${t}</td></tr>`).join('')}</tbody></table><p class="small">Weapons reload at the end of the activation: update their status. Remove temporary Conditions after the affected activation; permanent Conditions remain. Mark Ruptured on the affected component.</p></details>`;}
+function counter(id,kind,value,max,part=''){return `<div class="counter"><button aria-label="Decrease ${kind==='sp'?PARTS[part]:'Actions used'}" data-action="counter" data-id="${id}" data-kind="${kind}" data-part="${part}" data-value="-1" ${value<=0&&!(kind==='sp'&&state.squad.find(r=>r.id===id)?.battle.parts[part]==='catastrophic')?'disabled':''}>−</button><strong>${value}<span class="small">/${max}</span></strong><button aria-label="Increase ${kind==='sp'?PARTS[part]:'Actions used'}" data-action="counter" data-id="${id}" data-kind="${kind}" data-part="${part}" data-value="1" ${value>=max?'disabled':''}>+</button></div>`;}
+function baseBattleView(){return `<div class="toolbar"><div><span class="eyebrow">${esc(state.name)}</span><h2>Round ${state.round} · ${currentEngagement()[1]}</h2><p class="small">${engagementDuration(currentEngagement())}${state.engagementEnded?' · ENGAGEMENT COMPLETE — finish the game / open Aftermath':''}</p><p class="small">${deployedRigs().filter(r=>r.battle.activated).length}/${deployedRigs().length} Rigs activated · toggle each Rig to correct the count.</p></div><div class="row">${!isCampaign()?`<button data-action="finish-normal" ${!state.squad.length?'disabled':''}>Finish game</button>`:''}<button class="primary" data-action="next-round" ${!state.squad.length?'disabled':''}>Maintenance phase</button></div></div>
+ ${maintenanceView()}${battleNavigation()}${state.squad.length?`<div class="battle-grid ${battleFocus?'focus-rig':''}">${deployedRigs().map(battleCard).join('')}</div>${battleDock()}`:'<div class="empty"><strong>No battle sheets</strong>Build and confirm a squadron to begin.</div>'}
+ <details class="panel" style="margin-top:20px"><summary>Heat Threshold reference and round management</summary><p class="small">Roll D12 and add the modifier for the current space. Apply the effects, then resolve Exhaust and Ruptured. Open Maintenance phase, resolve Heat Threshold rolls, apply Exhaust once, then resolve Ruptured and other effects. Confirm the checklist to advance the round.</p><table class="reference-table"><tbody>${HEAT_RESULTS.map(([n,t])=>`<tr><td>${n}</td><td>${t}</td></tr>`).join('')}</tbody></table><p class="small">Activated automatically reloads usable weapons. Toggle it again to correct the activation marker; this does not undo reloading. Remove temporary Conditions after the affected activation; permanent Conditions remain. Mark Ruptured on the affected component.</p></details>`;}
 function render(){
  const open=[...document.querySelectorAll('details[open]')].map(el=>el.id||[...document.querySelectorAll('details')].indexOf(el));
  ensureCampaign();document.getElementById('app').innerHTML=menuScreen==='play'?workspaceBar()+(state.view==='campaign'?campaignView():state.view==='build'?buildView():battleView()):menuView();
  for(const key of open){const el=typeof key==='string'?document.getElementById(key):document.querySelectorAll('details')[key];if(el)el.open=true;}
  for(const v of ['build','battle','campaign']){const t=document.getElementById(v+'-tab');if(!t)continue;t.hidden=menuScreen!=='play'||(v==='campaign'&&!isCampaign());t.classList.toggle('active',state.view===v);t.setAttribute('aria-current',state.view===v?'page':'false');}
+ document.body.classList.toggle('battle-open',menuScreen==='play'&&state.view==='battle'&&deployedRigs().length>0);
  persist();
  if(!storageOK){const app=document.getElementById('app');app.innerHTML='<div class="warning" role="alert">Browser saving is unavailable or full. '+(campaignStarted()?'<button data-c-action="backup">Export campaign backup now</button>':'Keep this page open until you can save your data.')+'</div>'+app.innerHTML;}
 }
@@ -2059,12 +2126,12 @@ function baseHandleClick(ev){
  }
  if(action==='delete-save'){const sid=document.getElementById('saved-choice').value;if(!confirm('Delete this save?'))return;state.saved=state.saved.filter(x=>x.id!==sid);}
  if(action==='new'){if(state.squad.length&&!confirm('Create an empty squadron? Save the current squadron first if you want to keep it.'))return;state.squad=[];state.name='My squadron';state.round=1;state.formation=isCampaign()?1:0;resetDraft();}
- if(action==='activated'&&r)r.battle.activated=!r.battle.activated;
+ if(action==='activated'&&r)toggleActivation(r);
  if(action==='heat'&&r)r.battle.heat=Number(value);
  if(action==='condition'&&r){const a=r.battle.conditions;a.includes(value)?a.splice(a.indexOf(value),1):a.push(value);}
- if(action==='counter'&&r){const b=r.battle;if(el.dataset.kind==='actions')b.actions=Math.max(0,Math.min(5,b.actions+Number(value)));else{const part=Number(el.dataset.part);b.sp[part]=Math.max(0,Math.min(rigOf(r).sp[part],b.sp[part]+Number(value)));if(b.sp[part]===0&&b.parts[part]==='ok')b.parts[part]='catastrophic';if(b.sp[part]>0)b.parts[part]='ok';}}
+ if(action==='counter'&&r){const b=r.battle;if(el.dataset.kind==='actions')spendAction(r,Number(value));else{const part=Number(el.dataset.part);if(Number(value)<0&&b.parts[part]==='catastrophic')b.parts[part]='disabled';b.sp[part]=Math.max(0,Math.min(rigOf(r).sp[part],b.sp[part]+Number(value)));if(b.sp[part]===0&&b.parts[part]==='ok')b.parts[part]='catastrophic';if(b.sp[part]>0)b.parts[part]='ok';}}
  if(action==='reset-battle'){if(!confirm('Reset the battle and restore all Rigs?'))return;state.squad.forEach(r=>r.battle=freshBattle(r));state.round=1;}
- if(action==='next-round'){if(!confirm('Have you resolved Maintenance, Heat and Ruptured? Advance to the next round and reset only Actions and activation markers?'))return;state.round++;state.squad.forEach(r=>{r.battle.actions=0;r.battle.activated=false;});}
+ if(action==='next-round'){if(!confirm('Have you resolved Maintenance, Heat and Ruptured? Advance to the next round and reset only Actions and activation markers?'))return;state.round++;state.squad.forEach(r=>{r.battle.actions=0;r.battle.actionHistory=[];r.battle.activationConditions=null;r.battle.activated=false;});}
  render();
 }
 function baseHandleChange(ev){
@@ -2072,6 +2139,7 @@ function baseHandleChange(ev){
  if(f==='squad-name'){state.name=el.value;persist();return;}
  if(f==='ironclad-name'){draft.ironcladName=el.value.slice(0,60);if(draft.campaign)draft.campaign.pilotName=draft.ironcladName;return;}
  if(f==='rig-name'){draft.name=el.value;render();return;}
+ if(f==='action-heat'&&r){r.battle.actionHeat=Math.max(0,Math.min(9,Number(el.value)||0));persist();return;}
  if(f==='notes'&&r){r.battle.notes=el.value;persist();return;}
  if(f==='pilot')draft.pilot=Number(el.value);
  if(f==='weapon'){draft.weapons[Number(el.dataset.slot)]=el.value===''?null:Number(el.value);for(const key of Object.keys(draft.targets)){if(Number(draft.targets[key])===Number(el.dataset.slot))delete draft.targets[key];}}
@@ -2153,7 +2221,7 @@ function squadronErrors(){
 function buildView(){return campaignStarted()?campaignView():baseBuildView();}
 function battleView(){return `${campaignStarted()?'<div class="toolbar"><button data-c-action="open-hangar">Campaign hangar</button><button class="primary" data-c-action="finish-battle">Finish Engagement / Aftermath</button></div>':''}${baseBattleView()}`;}
 function campaignRigInfo(r){if(!isCampaign()||!r.campaign)return '';const x=r.campaign;
- return `<div class="campaign-rig-meta"><strong>${esc(x.pilotName)}</strong><span class="badge">Level ${x.level} · ${x.xp} XP · ${x.rerolls} re-rolls/game</span>${x.mercenary?'<span class="badge">MERCENARY · no XP or objectives</span>':''}${x.traits.length?`<details><summary>Permanent damage (${x.traits.length})</summary>`:''}${x.traits.map(t=>`<p class="small warning">${PARTS[t.part]}${t.part===1?' / '+SLOTS[t.slot]:''}: <b>${TRAITS[t.part][t.kind][0]}</b> — ${TRAITS[t.part][t.kind][1]}${t.locked?' (second-hand; cannot be removed)':''}</p>`).join('')}${x.traits.length?'</details>':''}${state.campaign?.phase==='battle'&&state.campaign.deployed.includes(r.id)?`<div class="row"><span class="small">Re-rolls remaining: ${Math.max(0,x.rerolls-(r.battle.rerollsUsed||0))}/${x.rerolls}</span><button data-c-action="reroll-used" data-id="${r.id}" data-value="1" ${(r.battle.rerollsUsed||0)>=x.rerolls?'disabled':''}>Use re-roll</button><button data-c-action="reroll-used" data-id="${r.id}" data-value="-1" ${!(r.battle.rerollsUsed||0)?'disabled':''}>Restore re-roll</button></div>`:''}<p class="small">Permanent SPD, Exhaust, Structure and capacity changes are included. Apply armour, weapon and Heat-result modifiers manually.</p></div>`;}
+ return `<div class="campaign-rig-meta"><strong>Campaign Ironclad</strong><span class="badge">Level ${x.level} · ${x.xp} XP · ${x.rerolls} re-rolls/game</span>${x.mercenary?'<span class="badge">MERCENARY · no XP or objectives</span>':''}${x.traits.length?`<details><summary>Permanent damage (${x.traits.length})</summary>`:''}${x.traits.map(t=>`<p class="small warning">${PARTS[t.part]}${t.part===1?' / '+SLOTS[t.slot]:''}: <b>${TRAITS[t.part][t.kind][0]}</b> — ${TRAITS[t.part][t.kind][1]}${t.locked?' (second-hand; cannot be removed)':''}</p>`).join('')}${x.traits.length?'</details>':''}${state.campaign?.phase==='battle'&&state.campaign.deployed.includes(r.id)?`<div class="row"><span class="small">Re-rolls remaining: ${Math.max(0,x.rerolls-(r.battle.rerollsUsed||0))}/${x.rerolls}</span><button data-c-action="reroll-used" data-id="${r.id}" data-value="1" ${(r.battle.rerollsUsed||0)>=x.rerolls?'disabled':''}>Use re-roll</button><button data-c-action="reroll-used" data-id="${r.id}" data-value="-1" ${!(r.battle.rerollsUsed||0)?'disabled':''}>Restore re-roll</button></div>`:''}<p class="small">Permanent SPD, Exhaust, Structure and capacity changes are included. Apply armour, weapon and Heat-result modifiers manually.</p></div>`;}
 function xpAward(r,amount){
  const c=ensureRig(r);if(c.mercenary)return;
  const old=c.level;c.xp+=amount;c.level=XP_LEVELS.reduce((v,n,i)=>c.xp>=n?i+1:v,1);
@@ -2250,10 +2318,10 @@ function campaignView(){
  <div class="campaign-nav">${['hangar','market','history'].map(v=>`<button data-c-action="tab" data-value="${v}" class="${campaignTab===v?'primary':''}">${{hangar:'Hangar',market:'Iron Market',history:'History & settings'}[v]}</button>`).join('')}</div>
  ${campaignTab==='market'?marketView():campaignTab==='history'?historyView():hangarView()}`;
 }
-function hangarView(){const c=state.campaign,locked=c.phase==='battle';return `<section class="panel"><div class="section-top"><h3>Deployment</h3><span class="badge">${deployedRigs().length} selected / ${state.squad.length} owned</span></div>${locked?'<p class="warning">An Engagement is in progress. Roster and market changes are locked until Aftermath.</p><div class="row"><button class="primary" data-c-action="resume">Resume battle sheets</button><button data-c-action="finish-battle">Finish Engagement / Aftermath</button></div>':`<div class="form-grid"><label class="field"><span>Agreed formation</span><select data-field="formation">${options(FORMATIONS.flatMap((f,i)=>i?[[i,f[0]]]:[]),state.formation)}</select></label><details id="deployment-options"><summary>Short-handed deployment${c.shortHanded?' · enabled':''}</summary>${checkField('Unable to fill formation: deploy remaining available Rigs','shortHanded',c.shortHanded)}</details></div><p class="small">Choose Rigs below; the rest remain in reserve. A mercenary uses its separate support slot.</p>${squadronErrors().length?`<p class="warning">${squadronErrors().map(esc).join('<br>')}</p>`:''}<button class="primary" data-c-action="deploy" ${squadronErrors().length?'disabled':''}>Begin next Engagement</button>`}</section>
- <div class="campaign-roster">${state.squad.slice().sort((a,b)=>(rigOf(a).faction==='nomads')-(rigOf(b).faction==='nomads')).map((r,index,list)=>{const x=ensureRig(r),rig=effectiveRig(r);return `${index===0||(rigOf(list[index-1]).faction==='nomads')!==(rig.faction==='nomads')?`<h3 class="rig-group-title">${rig.faction==='nomads'?'Nomad Rigs':'Faction Rigs'}</h3>`:''}<article class="panel hangar-card"><div class="section-top"><div><h3>${esc(r.name)}</h3><span class="small">${rig.name} · ${cost(r)}/${ironCapacity(r)} Iron</span></div><label class="checkline deployment-toggle"><input type="checkbox" data-c-deploy="${r.id}" ${c.deployed.includes(r.id)?'checked':''} ${locked?'disabled':''}>${c.deployed.includes(r.id)?'Deploy':'Reserve'}</label></div>
- <label class="field hangar-pilot"><span>Ironclad name</span><input data-c-pilot-name="${r.id}" maxlength="60" placeholder="Name your Ironclad" value="${esc(x.pilotName)}"></label><p class="small pilot-progress">${pilotOf(r).name} · Level ${x.level} · ${x.xp} XP · ${x.rerolls} re-rolls${x.mercenary?' · Mercenary':''}</p>
- <div class="hangar-components">${PARTS.map((p,i)=>`<div class="component-status ${r.battle.parts[i]!=='ok'||r.battle.sp[i]<rig.sp[i]||r.battle.ruptured[i]?'damaged':''}"><span>${p}</span><strong>${r.battle.sp[i]}/${rig.sp[i]}</strong><small>${r.battle.parts[i]==='ok'?'Operational':r.battle.parts[i]==='disabled'?'Disabled':'Catastrophic'}${r.battle.ruptured[i]?' · Ruptured':''}</small></div>`).join('')}</div>
+function hangarView(){const c=state.campaign,locked=c.phase==='battle';return `${engagementSelector()}<section class="panel"><div class="section-top"><h3>Deployment</h3><span class="badge">${deployedRigs().length} selected / ${state.squad.length} owned</span></div>${locked?'<p class="warning">An Engagement is in progress. Roster and market changes are locked until Aftermath.</p><div class="row"><button class="primary" data-c-action="resume">Resume battle sheets</button><button data-c-action="finish-battle">Finish Engagement / Aftermath</button></div>':`<div class="form-grid"><label class="field"><span>Agreed formation</span><select data-field="formation">${options(FORMATIONS.flatMap((f,i)=>i?[[i,f[0]]]:[]),state.formation)}</select></label><details id="deployment-options"><summary>Short-handed deployment${c.shortHanded?' · enabled':''}</summary>${checkField('Unable to fill formation: deploy remaining available Rigs','shortHanded',c.shortHanded)}</details></div><p class="small">Choose Rigs below; the rest remain in reserve. A mercenary uses its separate support slot.</p>${squadronErrors().length?`<p class="warning">${squadronErrors().map(esc).join('<br>')}</p>`:''}<button class="primary" data-c-action="deploy" ${squadronErrors().length?'disabled':''}>Begin next Engagement</button>`}</section>
+ ${c.pilots.length?`<section class="panel" style="margin-top:16px"><h3>Available Ironclads (${c.pilots.length})</h3><p class="small">Assign these surviving or unassigned Ironclads to a Rig using Rig & pilot management. Their name, grade, XP, level and re-rolls are retained.</p>${c.pilots.map(p=>`<p><strong>${esc(p.name)}</strong> · ${PILOTS[p.grade].name} · Level ${p.level} · ${p.xp} XP · ${p.rerolls} re-rolls/game</p>`).join('')}</section>`:''}<div class="campaign-roster">${state.squad.slice().sort((a,b)=>(rigOf(a).faction==='nomads')-(rigOf(b).faction==='nomads')).map((r,index,list)=>{const x=ensureRig(r),rig=effectiveRig(r);return `${index===0||(rigOf(list[index-1]).faction==='nomads')!==(rig.faction==='nomads')?`<h3 class="rig-group-title">${rig.faction==='nomads'?'Nomad Rigs':'Faction Rigs'}</h3>`:''}<article class="panel hangar-card">${rigBanner(r)}<div class="section-top"><div><h3>${esc(r.name)}</h3><span class="small">${rig.name} · ${cost(r)}/${ironCapacity(r)} Iron</span></div><label class="checkline deployment-toggle"><input type="checkbox" data-c-deploy="${r.id}" ${c.deployed.includes(r.id)?'checked':''} ${locked?'disabled':''}>${c.deployed.includes(r.id)?'Deploy':'Reserve'}</label></div>
+ <label class="field hangar-pilot"><span>Ironclad name</span><input data-c-pilot-name="${r.id}" maxlength="60" placeholder="Name your Ironclad" value="${esc(x.pilotName)}"></label><p class="small pilot-progress">${pilotOf(r).name} · Aim ${pilotOf(r).aim}+ · Aim target modifier ${pilotOf(r).aim-6} · Level ${x.level} · ${x.xp} XP · ${x.rerolls} re-rolls earned / game${locked&&c.deployed.includes(r.id)?` · ${Math.max(0,x.rerolls-(r.battle.rerollsUsed||0))} remaining`:""}${x.mercenary?' · Mercenary':''}</p>
+ <div class="hangar-components">${PARTS.map((p,i)=>`<div class="component-status ${componentColour(r.battle,i)} ${r.battle.parts[i]!=='ok'||r.battle.sp[i]<rig.sp[i]||r.battle.ruptured[i]?'damaged':''}"><span>${p}</span><strong>${r.battle.sp[i]}/${rig.sp[i]}</strong><small>${r.battle.parts[i]==='ok'?'Operational':r.battle.parts[i]==='disabled'?'Disabled':'Catastrophic'}${r.battle.ruptured[i]?' · Ruptured':''}</small></div>`).join('')}</div>
  ${x.traits.length?`<details id="hangar-traits-${r.id}"><summary>Permanent damage · ${x.traits.length} traits</summary>${x.traits.map(t=>`<p class="small warning">${PARTS[t.part]}${t.part===1?' / '+SLOTS[t.slot]:''}: <b>${TRAITS[t.part][t.kind][0]}</b> — ${TRAITS[t.part][t.kind][1]}${t.locked?' (second-hand; cannot be removed)':''}</p>`).join('')}</details>`:''}
  <details id="hangar-loadout-${r.id}"><summary>Weapons & Equipment</summary><p class="small">${r.weapons.map((w,i)=>w===null?'':SLOTS[i]+': '+esc(rig.weapons[w].name)).filter(Boolean).join('<br>')}</p><p class="small">Equipment: ${r.equipment.map(id=>esc(DATA.equipment[id].name)).join(', ')||'None'}</p>${!locked?`<button data-c-action="market-rig" data-id="${r.id}">Manage loadout</button>`:''}</details>
  ${!locked?`<details id="hangar-repairs-${r.id}"><summary>Repairs · ${x.freeSP} free SP remaining</summary><p class="small">Regular repairs: first 3 SP per Rig free, then 1 Salvage per 3 SP (rounded up). Restore Disabled → Catastrophic for 1 Salvage; Catastrophic → full for 1 Salvage. Each restoration adds a unique D6 trait. Two restoration steps therefore require two rolls.</p>${PARTS.map((part,i)=>`<div class="repair-row"><strong>${part} · ${r.battle.sp[i]}/${rig.sp[i]}</strong><div class="row"><label class="small">SP <input class="short-input" type="number" id="repair-${r.id}-${i}" min="1" max="${rig.sp[i]}" value="1"></label><label class="small">Trait D6 <input class="short-input" type="number" id="trait-${r.id}-${i}" min="1" max="6" placeholder="D6"></label>${i===1?`<select id="trait-slot-${r.id}" aria-label="Affected weapon">${options([[0,'Left weapon'],[1,'Right weapon']],0)}</select>`:''}<button data-c-action="repair" data-id="${r.id}" data-part="${i}">${r.battle.parts[i]==='ok'?'Repair SP':'Restore component'}</button></div>${c.credits.repairs?`<label class="checkline"><input type="checkbox" id="free-${r.id}-${i}">Use 1 terrain free-repair credit for this operation</label>`:''}${r.equipment.includes(33)&&!x.cacheUsed?`<label class="checkline"><input type="checkbox" id="cache-${r.id}-${i}">Iron Market Parts Cache: ignore the new repair trait (once this Aftermath)</label>`:''}</div>`).join('')}<p class="small">The battlefield table does not define the size of a “free repair”. This option treats one credit as the selected repair operation; use only if agreed by your group. Manual adjustments can record another ruling.</p></details>
@@ -2360,7 +2428,7 @@ function validateBackup(s){
 function exportBackup(){const data={app:'ooi-companion',format:1,exportedAt:new Date().toISOString(),state:snapshot()};const a=document.createElement('a'),url=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));a.href=url;a.download='ooi-campaign-'+new Date().toISOString().slice(0,10)+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);notify('Campaign backup exported.');}
 async function importBackup(file){if(!file)return;try{if(file.size>5*1024*1024)throw Error('Backup exceeds 5 MB.');const data=JSON.parse(await file.text());if(data.app!=='ooi-companion'||data.format!==1)throw Error('Not an Of Oil and Iron campaign backup.');const candidate=validateBackup(data.state);delete candidate.workspaces;candidate.view=candidate.campaign?.started?'campaign':'build';switchWorkspace(null,'campaign',candidate);}catch(e){notify(e.message);}}
 
-function handleClick(ev){
+function previousHandleClick(ev){
  const el=ev.target.closest('button');if(!el||el.disabled)return;if(el.dataset.menuAction){handleMenuAction(el);return;}if(el.dataset.workspaceAction){if(el.dataset.workspaceAction==='new-campaign')switchWorkspace(null,'campaign');return;}const cAction=el.dataset.cAction;
  if(cAction){try{handleCampaignAction(el);}catch(e){notify(e.message);}return;}
  if(isCampaign()){
@@ -2377,7 +2445,7 @@ function handleClick(ev){
  baseHandleClick(ev);
  if(campaignStarted()){for(const r of state.squad)normalizeRig(r);persist();}
 }
-function handleChange(ev){
+function previousHandleChange(ev){
  const el=ev.target,c=state.campaign;
  if(el.dataset.workspaceSelect!==undefined){switchWorkspace(el.value);return;}
  if(el.dataset.field==='mode'&&el.value!==state.mode){const entry=el.value==='standard'?workspaces.entries.find(x=>x.state.mode==='standard'):null;switchWorkspace(entry?.id||null,el.value==='standard'?'standard':'campaign');return;}
@@ -2392,7 +2460,7 @@ function handleChange(ev){
   persist();render();return;
  }
  if(el.dataset.cDeploy){if(c.phase==='battle')return;const id=el.dataset.cDeploy;c.deployed=el.checked?[...new Set([...c.deployed,id])]:c.deployed.filter(x=>x!==id);render();return;}
- if(el.dataset.cRigName){const r=state.squad.find(r=>r.id===el.dataset.cRigName);if(r&&el.value.trim()){r.name=el.value.trim();persist();}return;}
+ if(el.dataset.cRigName){const r=state.squad.find(r=>r.id===el.dataset.cRigName);if(r&&el.value.trim()){r.name=el.value.trim();render();}return;}
  if(el.dataset.cPilotName){const r=state.squad.find(r=>r.id===el.dataset.cPilotName);if(r){r.campaign.pilotName=el.value.slice(0,60);r.ironcladName=r.campaign.pilotName;persist();}return;}
  if(el.dataset.cTarget){const r=state.squad.find(r=>r.id===el.dataset.cTarget);if(r){if(el.value==='')delete r.targets[el.dataset.equipment];else r.targets[el.dataset.equipment]=Number(el.value);persist();}return;}
  if(el.dataset.cFrame){const r=state.squad.find(r=>r.id===el.dataset.cFrame);if(r){r.capacityTarget=el.value;render();}return;}
@@ -2407,7 +2475,7 @@ function handleCampaignAction(el){
  if(a==='resume'){if(c.phase!=='battle')throw Error('No Engagement in progress.');state.view='battle';render();}
  if(a==='deploy'){
   if(squadronErrors().length)throw Error(squadronErrors().join(' '));
-  transact('Engagement started',()=>{for(const r of deployedRigs()){const old=r.battle;r.battle={...freshBattle(r),sp:[...old.sp],parts:[...old.parts],ruptured:[...old.ruptured],weaponState:old.weaponState.map(w=>w==='disabled'?'disabled':'ready')};if(old.parts[0]!=='ok')r.battle.conditions.push('Stalled');if(old.parts[0]==='disabled')r.battle.conditions.push('Shocked');if(old.parts[2]==='disabled')r.battle.conditions.push('Immobilised');else if(old.parts[2]==='catastrophic')r.battle.conditions.push('Slowed');if(old.parts[1]==='disabled'){r.battle.weaponState[0]='disabled';r.battle.weaponState[1]='disabled';}normalizeRig(r);if(r.battle.parts[3]!=='ok')r.battle.heat=effectiveRig(r).heat.findIndex(h=>h!==null);}c.phase='battle';state.round=1;state.view='battle';});
+  transact('Engagement started',()=>{for(const r of deployedRigs()){const old=r.battle;r.battle={...freshBattle(r),heatLocked:!!old.heatLocked,sp:[...old.sp],parts:[...old.parts],ruptured:[...old.ruptured],weaponState:old.weaponState.map(w=>w==='disabled'?'disabled':'ready')};if(old.parts[0]!=='ok')r.battle.conditions.push('Stalled');if(old.parts[0]==='disabled')r.battle.conditions.push('Shocked');if(old.parts[2]==='disabled')r.battle.conditions.push('Immobilised');else if(old.parts[2]==='catastrophic')r.battle.conditions.push('Slowed');if(old.parts[1]==='disabled'){r.battle.weaponState[0]='disabled';r.battle.weaponState[1]='disabled';}normalizeRig(r);if(r.battle.parts[3]!=='ok')r.battle.heat=effectiveRig(r).heat.findIndex(h=>h!==null);}c.phase='battle';state.engagementEnded=false;state.round=1;state.view='battle';});
  }
  if(a==='finish-battle'){if(c.phase==='report'){state.view='campaign';render();return;}if(c.phase!=='battle')throw Error('No Engagement in progress.');newReport();render();}
  if(a==='cancel-report'){if(!confirm('Discard this unfinished Aftermath and return to the battle?'))return;c.report=null;c.phase='battle';state.view='battle';render();}
@@ -2415,7 +2483,7 @@ function handleCampaignAction(el){
  if(a==='add-search'){c.report.rows[id].extraSearches.push({die:null,equipmentDie:null});render();}
  if(a==='remove-search'){c.report.rows[id].extraSearches.splice(Number(el.dataset.index),1);render();}
  if(a==='apply-report'){outcomePreview(c.report);if(!confirm('Apply this Aftermath to the campaign? Check the preview first.'))return;transact('Aftermath applied: '+c.report.title,applyReport);}
- if(a==='reroll-used'&&r){if(c.phase!=='battle')throw Error('No Engagement in progress.');r.battle.rerollsUsed=Math.max(0,Math.min(r.campaign.rerolls,(r.battle.rerollsUsed||0)+Number(el.dataset.value)));render();}
+ if(a==='reroll-used'&&r){if(c.phase!=='battle'||!c.deployed.includes(r.id))throw Error('Deploy this Rig in an Engagement first.');r.battle.rerollsUsed=Math.max(0,Math.min(r.campaign.rerolls,(r.battle.rerollsUsed||0)+Number(el.dataset.value)));render();}
  if(a==='repair'&&r)transact(`Repair: ${r.name} / ${PARTS[Number(el.dataset.part)]}`,()=>repairRig(r,Number(el.dataset.part)));
  if(a==='market-rig'){c.market??=null;campaignTab='market';marketView();c.market.rigId=id;c.market.weapon=0;c.market.slot=0;render();}
  if(a==='recruit')transact('Chassis acquired: '+DATA.rigs.find(x=>x.id===c.market.chassis)?.name,recruit);
@@ -2452,12 +2520,25 @@ function chassisMarketField(m){const list=campaignChassis(m.source);return `<lab
 function modeSaves(){return state.saved.filter(s=>(s.mode||'standard')===state.mode);}
 function workspaceBar(){return `<section class="workspace-bar"><div class="row"><button data-menu-action="home">Main menu</button><button data-menu-action="${isCampaign()?'campaigns':'normal'}">${isCampaign()?'Campaigns':'Normal game'}</button><span class="badge">${isCampaign()?'CAMPAIGN':'NORMAL GAME'} · ${esc(state.name)}</span></div>${campaignStarted()?`<label class="field"><span>Campaign name</span><input data-field="squad-name" maxlength="60" value="${esc(state.name)}"></label>`:''}</section>`;}
 function menuSessions(mode){return [{id:workspaces.activeId,state},...workspaces.entries].filter(e=>e.state.mode===mode);}
+function normalGameMenu(){
+ const saves=state.saved.filter(s=>(s.mode||'standard')==='standard');
+ const sessions=menuSessions('standard').filter(e=>e.state.squad.length);
+ return `<div class="toolbar"><div><button data-menu-action="home">Main menu</button><h2>Normal game</h2></div></div><section class="panel"><h3>New game</h3><p class="small">Create a squadron or load a saved one. You can edit it before starting the battle.</p><button class="primary full" data-menu-action="new-normal">Create new squadron</button></section><h3 class="saved-menu-heading">Saved squadrons (${saves.length})</h3><div class="menu-grid">${saves.map(s=>`<section class="panel menu-card"><h3>${esc(s.name)}</h3><p class="small">${s.squad.length} Rigs · ${esc(FACTIONS.find(f=>f[0]===s.faction)?.[1]||s.faction)}</p><p class="small">${s.squad.map(r=>esc(r.name)).join(' · ')}</p><button class="primary full" data-menu-action="load-squadron" data-save="${s.id}">Load & edit squadron</button></section>`).join('')||'<div class="empty">No saved squadrons yet. Build one, then use Save squadron with name to keep it here.</div>'}</div>${sessions.length?`<details id="normal-sessions" class="panel" style="margin-top:20px"><summary>Current games & drafts (${sessions.length})</summary><div class="menu-grid">${sessions.map(e=>`<section class="menu-card"><h3>${esc(e.state.name)}</h3><p class="small">${e.state.squad.length} Rigs · Round ${e.state.round}</p><div class="row"><button data-menu-action="build" data-session="${e.id}">Edit squadron</button><button data-menu-action="resume" data-session="${e.id}">Resume game</button></div></section>`).join('')}</div></details>`:''}`;
+}
 function menuView(){
+ if(menuScreen==='normal')return normalGameMenu();
  if(menuScreen==='home')return `<div class="toolbar"><div><span class="eyebrow">OF OIL & IRON COMPANION</span><h2>Choose how to play</h2><p class="small">Campaigns and normal games have separate squadrons and progress.</p></div></div><div class="menu-grid"><section class="panel menu-card"><span class="eyebrow">01 / CAMPAIGN</span><h2>Campaign</h2><p>Build a starting squadron, develop your Ironclads and manage your hangar between Engagements.</p><button class="primary full" data-menu-action="campaigns">Open campaigns</button></section><section class="panel menu-card"><span class="eyebrow">02 / NORMAL GAME</span><h2>Normal game</h2><p>Build a squadron for a standalone game and use interactive battle sheets.</p><button class="primary full" data-menu-action="normal">Open normal game</button></section></div>`;
  const campaign=menuScreen==='campaigns',sessions=menuSessions(campaign?'campaign':'standard');
  return `<div class="toolbar"><div><button data-menu-action="home">Main menu</button><h2>${campaign?'Campaigns':'Normal game'}</h2></div>${campaign?'<button class="primary" data-menu-action="new-campaign">New campaign · Build squadron</button>':''}</div><p class="small">${campaign?'Create a starting squadron or resume one of your campaigns.':'Build your squadron here. Your campaigns keep their own progress.'}</p><div class="menu-grid">${sessions.map(e=>{const x=e.state;return `<section class="panel menu-card"><h3>${esc(x.name)}</h3><p class="small">${x.squad.length} Rigs${campaign?` · ${x.campaign?.started?`${x.campaign.games.length} Engagements completed`:'Starting squadron'}`:''}</p>${campaign&&x.campaign?.started?`<p class="small">${x.campaign.phase==='battle'?'Engagement in progress':x.campaign.phase==='report'?'Aftermath pending':'Hangar'}</p><button class="primary" data-menu-action="resume" data-session="${e.id}">Resume campaign</button>`:`<button class="primary" data-menu-action="build" data-session="${e.id}">Build squadron</button>${x.squad.length?`<button data-menu-action="resume" data-session="${e.id}">${campaign?'Resume setup':'Resume game'}</button>`:''}`}</section>`;}).join('')}${!campaign&&!sessions.length?'<section class="panel menu-card"><h3>Your normal game</h3><button class="primary" data-menu-action="new-normal">Build squadron</button></section>':''}</div>${campaign?'<details id="menu-import"><summary>Import a campaign backup</summary><p class="small">Adds a separate campaign.</p><input type="file" id="campaign-import" accept="application/json,.json"></details>':''}`;
 }
 function handleMenuAction(el){const a=el.dataset.menuAction;
+ if(a==='load-squadron'){
+  const saved=state.saved.find(s=>s.id===el.dataset.save&&(s.mode||'standard')==='standard');if(!saved){notify('This saved squadron is unavailable.');return;}
+  const squad=clone(saved.squad);for(const r of squad)r.battle=freshBattle(r);
+  const next={version:1,mode:'standard',name:saved.name,faction:saved.faction,formation:saved.formation,squad,round:1,view:'build',saved:[]};
+  if(switchWorkspace(null,'standard',next))notify('Squadron loaded. Edit it, then confirm when ready. Save with the same name to update it, or a new name to keep a variant.');return;
+ }
+
  if(['home','campaigns','normal'].includes(a)){menuScreen=a;render();return;}
  if(a==='new-campaign'){switchWorkspace(null,'campaign');return;}
  if(a==='new-normal'){switchWorkspace(null,'standard');return;}
@@ -2487,4 +2568,168 @@ function switchWorkspace(id,mode='campaign',imported=null){
  render();return true;
 }
 
-if(typeof document!=='undefined')init();
+
+let battleSelected='',battleFocus=false;
+const battleUndo=new Map();
+function activeRigId(){const rigs=deployedRigs();return rigs.some(r=>r.id===battleSelected)?battleSelected:rigs[0]?.id;}
+function battleSnapshot(){return {engagementEnded:!!state.engagementEnded,maintenance:clone(state.maintenance||null),round:state.round,rigs:state.squad.map(r=>({id:r.id,battle:clone(r.battle)}))};}
+function recordBattle(before){if(JSON.stringify(before)!==JSON.stringify(battleSnapshot())){const history=battleUndo.get(workspaces.activeId)||[];history.push(before);battleUndo.set(workspaces.activeId,history.slice(-20));}}
+function battleNavigation(){return `<p class="small swipe-hint">Tap a name or swipe the Rig card left / right.</p><nav class="rig-navigation" aria-label="Select Rig">${deployedRigs().map(r=>`<button data-mobile="select" data-id="${r.id}" aria-pressed="${r.id===activeRigId()}" class="${r.id===activeRigId()?'primary':''}">${esc(r.name)} · ${r.battle.activated?'✓ Activated':'Ready'}</button>`).join('')}<button class="focus-control" data-mobile="focus" aria-pressed="${battleFocus}">${battleFocus?'Show all Rigs':'Focus selected Rig'}</button></nav>`;}
+function battleDock(){if(state.maintenance)return '';const r=deployedRigs().find(r=>r.id===activeRigId());if(!r)return '';const b=r.battle;return `<aside class="battle-dock" aria-label="Selected Rig controls"><div class="dock-heading"><strong>${esc(r.name)}</strong><button data-mobile="undo" ${(battleUndo.get(workspaces.activeId)||[]).length?'':'disabled'}>↶ Undo</button></div><div class="dock-controls"><div><span class="small">Heat · ${b.heat}</span><div class="row"><button data-action="heat" data-id="${r.id}" data-value="${Math.max(0,b.heat-1)}" aria-label="Decrease Heat" ${b.heat<=0?'disabled':''}>−</button><button data-action="heat" data-id="${r.id}" data-value="${Math.min(9,b.heat+1)}" aria-label="Increase Heat" ${b.heat>=9?'disabled':''}>+</button></div></div><div><span class="small">Actions used</span>${counter(r.id,'actions',b.actions,actionLimit(r))}</div><button data-action="activated" data-id="${r.id}" aria-pressed="${b.activated}">${b.activated?'✓ Activated':'End activation'}</button></div><details class="quick-actions"><summary>Named actions</summary><p class="small">${b.manualActionHeat?'Manual Heat override: +'+(b.actionHeat??1):'Automatic Heat: standard actions +1; Cold Fire +0.'} Resolve movement, attacks and repair effects at the table.</p><div class="row">${['Move','Pivot','Prepare','Repair'].map(a=>`<button data-mobile="named" data-name="${a}" data-id="${r.id}" ${b.actions>=actionLimit(r)||b.activated||(a==='Move'&&activeConditions(r).includes('Immobilised'))?'disabled':''}>${a} [+${namedActionHeat(r,a)}]</button>`).join('')}${r.weapons.map((w,i)=>w===null?'':`<button data-mobile="named" data-name="${isMelee(effectiveRig(r).weapons[w])?'Melee':'Fire'}" data-slot="${i}" data-id="${r.id}" ${b.actions>=actionLimit(r)||b.activated||b.pendingArm||b.weaponState[i]!=='ready'?'disabled':''}>${isMelee(effectiveRig(r).weapons[w])?'Melee':'Fire'} · ${SLOTS[i]} [+${namedActionHeat(r,isMelee(effectiveRig(r).weapons[w])?'Melee':'Fire',i)}]</button>${!isMelee(effectiveRig(r).weapons[w])?`<button data-mobile="named" data-name="Reload" data-slot="${i}" data-id="${r.id}" ${b.actions>=actionLimit(r)||b.activated||b.weaponState[i]!=='reload'?'disabled':''}>Reload · ${SLOTS[i]} [+${namedActionHeat(r,'Reload',i)}]</button>`:''}`).join('')}</div></details></aside>`;}
+function handleClick(ev){
+ const el=ev.target.closest('button');if(!el||el.disabled)return;
+ const d=el.dataset;
+ if(d.rupturePicker){rupturePickerId=rupturePickerId===d.rupturePicker?null:d.rupturePicker;render();return;}
+ if(d.engagementRandom!==undefined){if(!(isCampaign()&&state.campaign?.phase==='battle')){const pool=availableEngagements();state.engagement=pool[crypto.getRandomValues(new Uint32Array(1))[0]%pool.length][0];render();}return;}
+ if(d.endRoll!==undefined&&state.maintenance){state.maintenance.endDie=crypto.getRandomValues(new Uint32Array(1))[0]%12+1;render();return;}
+ if(d.armLoss){const r=deployedRigs().find(r=>r.id===d.armLoss);if(!r||!r.battle.pendingArm||state.maintenance)return;const die=d.random?crypto.getRandomValues(new Uint32Array(1))[0]%12+1:Number(document.getElementById('arm-loss-'+r.id)?.value);if(!Number.isInteger(die)||die<1||die>12){notify('Enter a D12 result from 1 to 12.');return;}const before=battleSnapshot();r.battle.weaponState[die<=6?0:1]='disabled';r.battle.pendingArm=false;recordBattle(before);render();notify('D12 '+die+': '+(die<=6?'Left':'Right')+' weapon unusable.');return;}
+ if(d.action==='finish-normal'){finishNormalGame();return;}
+ if(d.maintenance){maintenanceAction(d.maintenance,d.id);return;}
+ if(d.action==='next-round'){maintenanceAction('open');return;}
+ if(state.maintenance&&(d.mobile==='named'||d.action==='activated'||(d.action==='counter'&&d.kind==='actions')||d.action==='reset-battle'||d.cAction==='finish-battle')){notify('Complete Maintenance before continuing.');return;}
+ if(d.mobile){
+  if(d.mobile==='select'){battleSelected=d.id;render();return;}
+  if(d.mobile==='focus'){battleFocus=!battleFocus;render();return;}
+  if(campaignStarted()&&state.campaign.phase!=='battle')return;
+  if(d.mobile==='undo'){const last=battleUndo.get(workspaces.activeId)?.pop();if(last){state.engagementEnded=!!last.engagementEnded;state.maintenance=clone(last.maintenance||null);state.round=last.round;for(const saved of last.rigs){const r=state.squad.find(r=>r.id===saved.id);if(r)r.battle=clone(saved.battle);}render();}return;}
+  if(d.mobile==='named'){
+   const r=deployedRigs().find(r=>r.id===d.id);if(!r||r.battle.actions>=actionLimit(r)||r.battle.activated)return;
+   const slot=Number(d.slot),weapon=effectiveRig(r).weapons[r.weapons[slot]];
+   if(['Fire','Melee','Reload'].includes(d.name)&&(!weapon||r.battle.weaponState[slot]==='disabled'||(d.name==='Reload'?r.battle.weaponState[slot]!=='reload':r.battle.weaponState[slot]!=='ready')))return;
+   if(d.name==='Move'&&activeConditions(r).includes('Immobilised')){notify('Immobilised: use Pivot instead of Move.');return;}
+   if(['Fire','Melee'].includes(d.name)&&r.battle.pendingArm){notify('Resolve the damaged Arms D12 first.');return;}
+   const before=battleSnapshot();spendAction(r,1,namedActionHeat(r,d.name,slot));
+   if(d.name==='Fire')r.battle.weaponState[slot]='reload';
+   if(d.name==='Reload')r.battle.weaponState[slot]='ready';
+   recordBattle(before);render();return;
+  }
+ }
+ const track=state.view==='battle'&&(['activated','heat','counter','condition','next-round','reset-battle'].includes(d.action)||d.cAction==='reroll-used');
+ const before=track?battleSnapshot():null;
+ previousHandleClick(ev);
+ if(before){for(const old of before.rigs){const r=state.squad.find(r=>r.id===old.id);if(r)syncComponentDamage(r,old.battle);}recordBattle(before);render();}
+ // Battle history is scoped to an Engagement and must not undo campaign transitions.
+ if(d.cAction&&d.cAction!=='reroll-used'){battleUndo.delete(workspaces.activeId);if(state.view==='battle')render();}
+}
+function handleChange(ev){
+ if(ev.target.dataset.field==='manual-action-heat'){const r=state.squad.find(r=>r.id===ev.target.dataset.id);if(r){r.battle.manualActionHeat=ev.target.checked;persist();render();}return;}
+ if(ev.target.dataset.field==='engagement'){if(!(isCampaign()&&state.campaign?.phase==='battle')&&availableEngagements().some(e=>e[0]===ev.target.value)){state.engagement=ev.target.value;render();}return;}
+ if(state.maintenance&&['end-die','early-end'].includes(ev.target.dataset.field)){state.maintenance[ev.target.dataset.field==='end-die'?'endDie':'earlyEnd']=ev.target.type==='checkbox'?ev.target.checked:ev.target.value;persist();return;}
+ if(ev.target.dataset.maintenanceField){const el=ev.target,row=state.maintenance?.rows.find(x=>x.id===el.dataset.id);if(row){row[el.dataset.maintenanceField]=el.type==='checkbox'?el.checked:el.value;persist();render();}return;}
+
+ const track=state.view==='battle'&&['part-state','ruptured','weapon-state','spent','action-heat'].includes(ev.target.dataset.field);
+ const before=track?battleSnapshot():null;previousHandleChange(ev);if(before){for(const old of before.rigs){const r=state.squad.find(r=>r.id===old.id);if(r)syncComponentDamage(r,old.battle);}recordBattle(before);render();}
+}
+
+
+
+function maintenanceRollText(total){const i=total<=5?0:total<=7?1:total<=9?2:total<=11?3:total<=13?4:total<=15?5:total<=17?6:total===18?7:total===19?8:9;return HEAT_RESULTS[i][1];}
+function legacyMaintenanceView(){const m=state.maintenance;if(!m)return '';return `<section class="panel maintenance-panel" id="maintenance-panel"><h2>Maintenance phase · Round ${state.round}</h2><p class="small">1. Resolve Heat Threshold rolls, hottest Rig first (ties: initiative). Enter the dice rolled at the table. Apply results using the Rig trackers below, including any repeat rolls, then mark each roll resolved.</p><div class="maintenance-grid">${m.rows.map(row=>{const r=state.squad.find(r=>r.id===row.id);if(!r)return '';const rig=effectiveRig(r),b=r.battle,total=Number(row.die)+row.modifier+Number(row.extra||0);return `<article class="component"><h3>${esc(r.name)}</h3><p class="small">Heat at phase start: ${row.heat} · Exhaust ${rig.exhaust}</p>${row.required?`<p class="warning">Heat Threshold: D12 + ${row.modifier}${row.extra?` · extra modifier ${esc(row.extra)}`:''}</p><label class="field"><span>D12 result</span><input type="number" min="1" max="12" step="1" data-maintenance-field="die" data-id="${r.id}" value="${esc(row.die)}" ${m.cooled?'disabled':''}></label><label class="field"><span>Additional Heat-result modifier (Equipment / traits)</span><input type="number" min="-20" max="20" step="1" data-maintenance-field="extra" data-id="${r.id}" value="${esc(row.extra)}" ${m.cooled?'disabled':''}></label>${Number.isInteger(Number(row.die))&&Number(row.die)>=1&&Number(row.die)<=12?`<p><strong>Total ${total}:</strong> ${maintenanceRollText(total)}</p>`:''}<label class="checkline"><input type="checkbox" data-maintenance-field="resolved" data-id="${r.id}" ${row.resolved?'checked':''} ${m.cooled?'disabled':''}>All Heat results and repeat rolls applied</label>`:'<p class="small">Below Heat Threshold: no roll required.</p>'}<p class="small">Current Heat: ${b.heat} · ${b.parts[3]==='disabled'?'Engine Disabled: cannot cool.':b.parts[3]==='catastrophic'?'Engine damaged: cannot cool below Heat Threshold.':'Engine operational.'}</p><label class="checkline"><input type="checkbox" data-maintenance-field="blocked" data-id="${r.id}" ${row.blocked?'checked':''} ${m.cooled?'disabled':''}>Heat cannot decrease (other effect)</label>${r.equipment.some(id=>DATA.equipment[id].name==='Thermal Purge Vent')?`<label class="checkline"><input type="checkbox" data-maintenance-field="stationary" data-id="${r.id}" ${row.stationary?'checked':''} ${m.cooled?'disabled':''}>Thermal Purge Vent: remained stationary (+2 cooling)</label>`:''}${m.cooled?`<p class="small">Exhaust applied: ${row.beforeCooling} → ${row.afterCooling} Heat</p>`:''}<p class="small"><b>Ruptured:</b> ${b.ruptured.map((v,i)=>v?`${PARTS[i]}: resolve 2 damage`:'').filter(Boolean).join(' · ')||'None'}</p>${r.equipment.filter(id=>/Maintenance|Heat Threshold/i.test(DATA.equipment[id].effect)).map(id=>`<p class="small"><b>${esc(DATA.equipment[id].name)}:</b> ${esc(DATA.equipment[id].effect)}</p>`).join('')}${r.campaign?.traits?.length?'<p class="small">Check permanent damage effects in this Rig’s details.</p>':''}</article>`;}).join('')}</div><div class="row" style="margin-top:16px"><button class="primary" data-maintenance="cool" ${m.cooled?'disabled':''}>${m.cooled?'Exhaust applied':'Apply Exhaust to all Rigs'}</button><button data-mobile="undo" ${(battleUndo.get(workspaces.activeId)||[]).length?'':'disabled'}>↶ Undo last change</button></div><p class="small">2. Exhaust is applied automatically once, after resolving Heat rolls. 3. Resolve Ruptured damage, other Maintenance effects, destroyed Rigs and objective scoring manually using the trackers.</p><label class="checkline"><input id="maintenance-complete" type="checkbox" ${m.complete?'checked':''}>All Ruptured damage, other effects and objective scoring have been resolved</label><button class="primary full" data-maintenance="finish" ${m.cooled?'':'disabled'}>Confirm Maintenance & start round ${state.round+1}</button></section>`;}
+function legacyMaintenanceAction(action){
+ if(state.view!=='battle'||!deployedRigs().length||(campaignStarted()&&state.campaign.phase!=='battle'))return;
+ if(action==='open'){
+  if(state.engagementEnded){notify('This Engagement has ended. Finish the game or open Aftermath.');return;}
+  if(state.maintenance){render();return;}
+  if(deployedRigs().some(r=>!r.battle.activated)&&!confirm('Some Rigs are not marked Activated. Have all activations been completed or skipped?'))return;
+  const before=battleSnapshot();state.maintenance={round:state.round,cooled:false,rows:deployedRigs().filter(r=>r.battle.parts.filter(p=>p==='disabled').length<2).sort((a,b)=>b.battle.heat-a.battle.heat).map(r=>{const mod=effectiveRig(r).heat[r.battle.heat];return {id:r.id,heat:r.battle.heat,modifier:mod??0,required:mod!==null,die:'',extra:r.equipment.some(id=>DATA.equipment[id].name==='Exotic Engine Coolant')?-1:0,resolved:false,blocked:false,stationary:false};})};recordBattle(before);render();return;
+ }
+ const m=state.maintenance;if(!m)return;
+ if(action==='cool'){
+  if(m.cooled)return;
+  if(m.rows.some(row=>row.required&&(!row.resolved||!Number.isInteger(Number(row.die))||Number(row.die)<1||Number(row.die)>12||!Number.isInteger(Number(row.extra))||Math.abs(Number(row.extra))>20))){notify('Enter a valid D12 result and confirm all Heat results and repeat rolls first.');return;}
+  if(needsEndRoll()&&!m.earlyEnd&&(!Number.isInteger(Number(m.endDie))||Number(m.endDie)<1||Number(m.endDie)>12)){notify('Enter the Engagement end D12 first.');return;}
+  const ended=!!m.earlyEnd||state.round>=(currentEngagement()[2]||6)||(needsEndRoll()&&Number(m.endDie)>=(state.round===4?8:5));
+  const before=battleSnapshot();for(const row of m.rows){const r=state.squad.find(r=>r.id===row.id);if(!r)continue;const b=r.battle,rig=effectiveRig(r);row.beforeCooling=b.heat;
+   if(b.parts.filter(p=>p==='disabled').length<2&&b.parts[3]!=='disabled'&&!row.blocked){const floor=b.parts[3]==='catastrophic'?Math.max(0,rig.heat.findIndex(x=>x!==null)):0;const extra=row.stationary&&r.equipment.some(id=>DATA.equipment[id].name==='Thermal Purge Vent')?2:0;b.heat=Math.min(b.heat,Math.max(floor,b.heat-Math.max(0,rig.exhaust)-extra));}
+   row.afterCooling=b.heat;
+  }m.cooled=true;recordBattle(before);render();return;
+ }
+ if(action==='finish'){
+  if(!m.cooled||!document.getElementById('maintenance-complete')?.checked){notify('Apply Exhaust and confirm the remaining Maintenance effects first.');return;}
+  const before=battleSnapshot();state.round++;for(const r of deployedRigs()){r.battle.actions=0;r.battle.actionHistory=[];r.battle.activationConditions=null;r.battle.activated=false;}state.maintenance=null;recordBattle(before);render();notify('Maintenance complete. Next round started.');
+ }
+}
+
+
+function maintenanceFinal(row){const r=state.squad.find(r=>r.id===row.id),rig=effectiveRig(r),b=clone(row.preview);
+ if(b.parts.filter(p=>p==='disabled').length<2){
+  if(b.parts[3]!=='disabled'&&!b.heatLocked&&!row.blocked){const floor=b.parts[3]==='catastrophic'?Math.max(0,rig.heat.findIndex(x=>x!==null)):0;const vent=row.stationary&&r.equipment.some(id=>DATA.equipment[id].name==='Thermal Purge Vent')?2:0;b.heat=Math.min(b.heat,Math.max(floor,b.heat-rig.exhaust-vent));}
+  b.ruptured.forEach((v,i)=>{if(v&&b.parts[i]!=='disabled')inflict(b,i,2);});
+ }
+ if(b.parts[0]!=='ok'&&!b.conditions.includes('Stalled'))b.conditions.push('Stalled');
+ if(b.parts[0]==='disabled'&&!b.conditions.includes('Shocked'))b.conditions.push('Shocked');
+ if(b.parts[2]!=='ok'&&!b.conditions.includes(b.parts[2]==='disabled'?'Immobilised':'Slowed'))b.conditions.push(b.parts[2]==='disabled'?'Immobilised':'Slowed');
+ if(b.parts[0]!=='ok')b.weaponState[2]='disabled';
+ if(b.parts[1]==='disabled'){b.weaponState[0]='disabled';b.weaponState[1]='disabled';}
+ if(b.parts[1]==='catastrophic'&&row.original.parts[1]==='ok'&&Number(row.armDie)>=1)b.weaponState[Number(row.armDie)<=6?0:1]='disabled';
+ if(b.parts[3]==='catastrophic'&&!b.heatLocked)b.heat=Math.max(b.heat,rig.heat.findIndex(x=>x!==null));
+ return b;
+}
+function maintenanceView(){const m=state.maintenance;if(!m)return '';if(!m.automatic)return legacyMaintenanceView();
+ return `<div class="maintenance-backdrop"><section class="panel maintenance-dialog" role="dialog" aria-modal="true" aria-label="Maintenance phase"><h2>Maintenance phase · Round ${state.round}</h2><p class="small">Enter your D12 or tap Roll D12, then Apply result. Repeat rolls and impact locations are requested when needed. Changes remain a preview until confirmation. Resolve tied Heat in initiative order.</p><div class="maintenance-grid">${m.rows.map(row=>{const r=state.squad.find(r=>r.id===row.id),final=maintenanceFinal(row),arm=final.parts[1]==='catastrophic'&&row.original.parts[1]==='ok';return `<article class="component"><h3>${esc(r.name)}</h3><p class="small">Starting Heat ${row.original.heat} · Exhaust ${effectiveRig(r).exhaust}</p>${!row.done?`<p><strong>${row.location?'Impact location D12':'Heat Threshold D12 + '+row.modifier}</strong></p><div class="row"><input aria-label="D12 for ${esc(r.name)}" type="number" min="1" max="12" step="1" data-maintenance-field="die" data-id="${row.id}" value="${esc(row.die)}"><button data-maintenance="roll" data-id="${row.id}">Roll D12</button><button data-maintenance="apply" data-id="${row.id}">Apply result</button></div>${!row.location?`<label class="field"><span>Additional result modifier</span><input type="number" min="-20" max="20" data-maintenance-field="extra" data-id="${row.id}" value="${esc(row.extra)}"></label>`:''}`:`<span class="badge">${row.required?'Heat resolved':'No Heat roll required'}</span>`}${row.log.map(t=>`<p class="small">${esc(t)}</p>`).join('')}<label class="checkline"><input type="checkbox" data-maintenance-field="blocked" data-id="${row.id}" ${row.blocked?'checked':''}>Other effect prevents cooling</label>${r.equipment.some(id=>DATA.equipment[id].name==='Thermal Purge Vent')?`<label class="checkline"><input type="checkbox" data-maintenance-field="stationary" data-id="${row.id}" ${row.stationary?'checked':''}>Remained stationary · Thermal Purge Vent</label>`:''}${arm?`<label class="field"><span>Damaged Arms: D12 (1–6 left / 7–12 right weapon)</span><input type="number" min="1" max="12" data-maintenance-field="armDie" data-id="${row.id}" value="${esc(row.armDie||'')}"></label><button data-maintenance="arm-roll" data-id="${row.id}">Roll weapon D12</button>`:''}<p><strong>Preview after Maintenance</strong><br>Heat ${row.original.heat} → ${final.heat}<br>${PARTS.map((p,i)=>`<span class="maintenance-part ${componentColour(final,i)}">${p}: ${row.original.sp[i]} → ${final.sp[i]} (${final.parts[i]})</span>`).join('')}${r.weapons.map((w,i)=>w===null?'':`<span class="maintenance-part ${final.weaponState[i]==='disabled'?'damage-red':''}">${SLOTS[i]} · ${esc(effectiveRig(r).weapons[w].name)}: ${final.weaponState[i]==='disabled'?'UNUSABLE':final.weaponState[i]==='reload'?'Reload required':'Ready'}</span>`).join('')}</p><p class="small">Conditions: ${final.conditions.join(', ')||'None'}${final.skipNext?' · Skip next activation':''}${final.heatLocked?' · Heat locked':''}</p>${final.parts.filter(p=>p==='disabled').length>=2?'<p class="warning">Destroyed: resolve explosion checks and any damage to nearby Rigs at the table before confirming.</p>':''}</article>`;}).join('')}</div><p class="small">Exhaust and 2 damage per Ruptured component are included automatically. Objective scoring, explosions affecting other models and scenario-specific effects remain at the table.</p>${engagementEndPanel()}<label class="checkline"><input id="maintenance-complete" type="checkbox">Other table effects and objectives resolved</label><div class="row"><button data-maintenance="cancel">Cancel preview</button><button class="primary" data-maintenance="finish" ${m.rows.every(r=>r.done)?'':'disabled'}>Confirm Maintenance & resolve round end</button></div></section></div>`;
+}
+function maintenanceAction(action,id){
+ if(state.view!=='battle'||(campaignStarted()&&state.campaign.phase!=='battle'))return;
+ if(state.maintenance&&!state.maintenance.automatic){legacyMaintenanceAction(action);return;}
+ if(action==='open'){
+  if(state.engagementEnded){notify('This Engagement has ended. Finish the game or open Aftermath.');return;}
+  if(state.maintenance){render();return;}
+  if(deployedRigs().some(r=>!r.battle.activated)&&!confirm('Have all activations been completed or skipped?'))return;
+  state.maintenance={automatic:true,rows:deployedRigs().filter(r=>r.battle.parts.filter(p=>p==='disabled').length<2).sort((a,b)=>b.battle.heat-a.battle.heat).map(r=>{const modifier=effectiveRig(r).heat[r.battle.heat];return {id:r.id,original:clone(r.battle),preview:clone(r.battle),modifier:modifier??0,required:modifier!==null,done:modifier===null,die:'',extra:(r.equipment.some(id=>DATA.equipment[id].name==='Exotic Engine Coolant')?-1:0)+(r.campaign?.traits.some(t=>t.part===3&&t.kind===0)?1:0),log:[],location:false};})};render();return;
+ }
+ const m=state.maintenance;if(!m)return;const row=m.rows.find(r=>r.id===id);
+ const roll=()=>crypto.getRandomValues(new Uint32Array(1))[0]%12+1;
+ if(action==='cancel'){state.maintenance=null;render();return;}
+ if(action==='roll'&&row&&!row.done){row.die=roll();render();return;}
+ if(action==='arm-roll'&&row){row.armDie=roll();render();return;}
+ if(action==='apply'&&row&&!row.done){
+  const die=Number(row.die),extra=Number(row.extra);if(!Number.isInteger(die)||die<1||die>12||!Number.isInteger(extra)||Math.abs(extra)>20){notify('Enter a valid D12 result and modifier.');return;}
+  const b=row.preview;row.die='';
+  if(row.location){const part=die<=4?0:die<=7?1:die<=10?2:3;if(b.parts[part]==='disabled'||b.ruptured[part]){row.log.push('Impact '+die+': unavailable or already Ruptured; roll impact again.');}else{b.ruptured[part]=true;row.location=false;row.done=true;row.log.push(PARTS[part]+' becomes Ruptured.');}render();return;}
+  const total=die+row.modifier+extra;const condition=total<=7?'Stalled':total<=9?'Slowed':'Shocked',part=total<=7?0:total<=9?2:1;
+  if(total>=6&&total<=11&&(b.parts[part]==='disabled'||b.conditions.includes(condition))){row.log.push('D12 '+die+' → '+total+': result cannot apply; roll again.');render();return;}
+  if(total===19&&b.parts[3]==='disabled'){row.log.push('Engine already Disabled; roll again.');render();return;}
+  row.log.push('D12 '+die+' → '+total+': '+maintenanceRollText(total));row.done=true;
+  if(total>=6&&total<=11){inflict(b,part,2);b.conditions.push(condition);}
+  else if(total<=5){}
+  else if(total<=13){row.location=true;row.done=false;}
+  else if(total<=15||total===18){b.parts.forEach((p,i)=>{if(p!=='disabled')inflict(b,i,1);});if(total===18)row.done=false;}
+  else if(total<=17){b.heat=0;b.skipNext=true;}
+  else if(total===19){b.sp[3]=0;b.parts[3]=b.parts[3]==='catastrophic'?'disabled':'catastrophic';}
+  else{b.parts=b.parts.map(p=>p==='disabled'?'disabled':'catastrophic');b.sp=b.sp.map(()=>0);b.heatLocked=true;}
+  render();return;
+ }
+ if(action==='finish'){
+  if(!m.rows.every(r=>r.done)||!document.getElementById('maintenance-complete')?.checked){notify('Resolve all rolls and confirm other table effects first.');return;}
+  if(m.rows.some(row=>{const b=maintenanceFinal(row);return b.parts[1]==='catastrophic'&&row.original.parts[1]==='ok'&&(!Number.isInteger(Number(row.armDie))||Number(row.armDie)<1||Number(row.armDie)>12);})){notify('Roll which weapon is lost for damaged Arms.');return;}
+  if(needsEndRoll()&&!m.earlyEnd&&(!Number.isInteger(Number(m.endDie))||Number(m.endDie)<1||Number(m.endDie)>12)){notify('Enter the Engagement end D12 first.');return;}
+  const ended=!!m.earlyEnd||state.round>=(currentEngagement()[2]||6)||(needsEndRoll()&&Number(m.endDie)>=(state.round===4?8:5));
+  const before=battleSnapshot();for(const row of m.rows){const r=state.squad.find(r=>r.id===row.id);r.battle=maintenanceFinal(row);}
+  for(const r of deployedRigs()){const b=r.battle;b.actions=0;b.actionHistory=[];b.activationConditions=null;b.skipActivation=!!b.skipNext;b.activated=!!b.skipNext;b.skipNext=false;}
+  state.engagementEnded=ended;if(!ended)state.round++;state.maintenance=null;recordBattle(before);render();notify(ended?'Engagement complete. Finish the game or open Aftermath.':'Maintenance applied. Next round started.');
+ }
+}
+function adjacentRigId(id,direction){const rigs=deployedRigs(),index=rigs.findIndex(r=>r.id===id);return rigs[Math.max(0,Math.min(rigs.length-1,index+direction))]?.id;}
+function installRigSwipe(){
+ let gesture=null;
+ const enabled=()=>menuScreen==='play'&&state.view==='battle'&&(window.matchMedia('(max-width: 767px)').matches||battleFocus);
+ document.addEventListener('touchstart',ev=>{
+  gesture=null;
+  if(!enabled()||ev.touches.length!==1)return;
+  const target=ev.target,card=target.closest('.battle-card.selected-rig');
+  if(!card||target.closest('button,input,select,textarea,a,summary,.heat-track'))return;
+  gesture={x:ev.touches[0].clientX,y:ev.touches[0].clientY,id:activeRigId(),time:Date.now()};
+ },{passive:true});
+ document.addEventListener('touchmove',ev=>{if(ev.touches.length!==1)gesture=null;},{passive:true});
+ document.addEventListener('touchcancel',()=>{gesture=null;},{passive:true});
+ document.addEventListener('touchend',ev=>{
+  const start=gesture;gesture=null;
+  if(!start||!enabled()||!ev.changedTouches.length||start.id!==activeRigId())return;
+  const dx=ev.changedTouches[0].clientX-start.x,dy=ev.changedTouches[0].clientY-start.y;
+  if(Math.abs(dx)<65||Math.abs(dx)<Math.abs(dy)*1.7||Date.now()-start.time>900)return;
+  const next=adjacentRigId(start.id,dx<0?1:-1);
+  if(next&&next!==start.id){battleSelected=next;render();document.querySelector('.rig-navigation button[aria-pressed="true"]')?.scrollIntoView({block:'nearest',inline:'nearest'});}
+ },{passive:true});
+}
+
+if(typeof document!=='undefined'){init();installRigSwipe();}
