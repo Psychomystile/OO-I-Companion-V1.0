@@ -2610,6 +2610,15 @@ function battleSnapshot(){return {engagementEnded:!!state.engagementEnded,mainte
 function recordBattle(before){if(JSON.stringify(before)!==JSON.stringify(battleSnapshot())){const history=battleUndo.get(workspaces.activeId)||[];history.push(before);battleUndo.set(workspaces.activeId,history.slice(-20));}}
 function battleNavigation(){return `<p class="small swipe-hint">Tap a name or swipe the Rig card left / right.</p><nav class="rig-navigation" aria-label="Select Rig">${deployedRigs().map(r=>`<button data-mobile="select" data-id="${r.id}" aria-pressed="${r.id===activeRigId()}" class="${r.id===activeRigId()?'primary':''}">${esc(r.name)} · ${r.battle.activated?'✓ Activated':'Ready'}</button>`).join('')}<button class="focus-control" data-mobile="focus" aria-pressed="${battleFocus}">${battleFocus?'Show all Rigs':'Focus selected Rig'}</button></nav>`;}
 function cardQuickActions(r){const b=r.battle;return `<section class="card-actions"><div class="row"><button data-mobile="undo" ${(battleUndo.get(workspaces.activeId)||[]).length?'':'disabled'}>↶ Undo last change</button></div><details class="quick-actions"><summary>Named actions</summary><p class="small">Automatic Heat: standard actions +1; Cold Fire +0. Resolve movement, attacks and repair effects at the table. Move includes one Pivot up to 90° at its start or end, with no additional Action or Heat.</p><div class="row">${['Move','Prepare','Repair'].map(a=>`<button data-mobile="named" data-name="${a}" data-id="${r.id}" ${b.actions>=actionLimit(r)||b.activated||(a==='Move'&&activeConditions(r).includes('Immobilised'))?'disabled':''}>${a} [+${namedActionHeat(r,a)}]</button>`).join('')}${r.weapons.map((w,i)=>w===null?'':`<button data-mobile="named" data-name="${isMelee(effectiveRig(r).weapons[w])?'Melee':'Fire'}" data-slot="${i}" data-id="${r.id}" ${b.actions>=actionLimit(r)||b.activated||b.pendingArm||b.weaponState[i]!=='ready'?'disabled':''}>${isMelee(effectiveRig(r).weapons[w])?'Melee':'Fire'} · ${SLOTS[i]} [+${namedActionHeat(r,isMelee(effectiveRig(r).weapons[w])?'Melee':'Fire',i)}]</button>${!isMelee(effectiveRig(r).weapons[w])?`<button data-mobile="named" data-name="Reload" data-slot="${i}" data-id="${r.id}" ${b.actions>=actionLimit(r)||b.activated||b.weaponState[i]!=='reload'?'disabled':''}>Reload · ${SLOTS[i]} [+${namedActionHeat(r,'Reload',i)}]</button>`:''}`).join('')}</div></details></section>`;}
+function scrollToSelectedRig(){
+ requestAnimationFrame(()=>{
+  const card=document.querySelector('.battle-card.selected-rig');if(!card)return;
+  const nav=document.querySelector('.rig-navigation');
+  const sticky=nav&&['sticky','fixed'].includes(getComputedStyle(nav).position);
+  const offset=16+(sticky?nav.getBoundingClientRect().height:0);
+  window.scrollTo({top:Math.max(0,window.scrollY+card.getBoundingClientRect().top-offset),behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});
+ });
+}
 function selectClickedCard(target){const card=target.closest('.battle-card[data-card]');if(!card||state.maintenance)return;const id=card.dataset.card;if(!deployedRigs().some(r=>r.id===id))return;battleSelected=id;
  document.querySelectorAll('.battle-card[data-card]').forEach(el=>el.classList.toggle('selected-rig',el.dataset.card===id));
  document.querySelectorAll('.rig-navigation button[data-id]').forEach(el=>{const selected=el.dataset.id===id;el.classList.toggle('primary',selected);el.setAttribute('aria-pressed',String(selected));});
@@ -2638,7 +2647,7 @@ function handleClick(ev){
  if(d.action==='next-round'){maintenanceAction('open');return;}
  if(state.maintenance&&(d.mobile==='named'||d.action==='activated'||(d.action==='counter'&&d.kind==='actions')||d.action==='reset-battle'||d.cAction==='finish-battle')){notify('Complete Maintenance before continuing.');return;}
  if(d.mobile){
-  if(d.mobile==='select'){battleSelected=d.id;render();return;}
+  if(d.mobile==='select'){battleSelected=d.id;render();scrollToSelectedRig();return;}
   if(d.mobile==='focus'){battleFocus=!battleFocus;render();return;}
   if(campaignStarted()&&state.campaign.phase!=='battle')return;
   if(d.mobile==='undo'){const last=battleUndo.get(workspaces.activeId)?.pop();if(last){state.engagementEnded=!!last.engagementEnded;state.maintenance=clone(last.maintenance||null);state.round=last.round;for(const saved of last.rigs){const r=state.squad.find(r=>r.id===saved.id);if(r)r.battle=clone(saved.battle);}render();}return;}

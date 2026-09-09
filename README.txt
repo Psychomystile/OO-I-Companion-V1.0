@@ -1,3 +1,6 @@
+VERSION 0.26.1 — Jump to selected Rig
+Selecting a Rig name scrolls to its battle sheet on all devices, accounting for the sticky mobile navigation and reduced-motion preferences. Normal games and campaigns share this behavior. Includes all previous changes.
+
 VERSION 0.26 — Pre-game Engagement and destroyed Rigs
 Engagement removed from squadron creation. Normal games have a preparation screen; campaigns choose in Hangar before deployment. Destroyed Rigs have red locked sheets and a burnt image; explosion confirmation and correction via Undo remain available. Includes all previous changes.
 
