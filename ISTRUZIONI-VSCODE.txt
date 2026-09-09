@@ -1,3 +1,28 @@
+VERSION 0.25 — SHUT DOWN AND EXPLODED RIGS
+Power-symbol Shut Down sits beside Activated. Before spending any Actions it
+forfeits the activation and cools to 0, subject to engine damage / heat lock.
+A destroyed Rig offers Mark exploded after its explosion check at the table.
+An exploded Rig has a red locked battle sheet, EXPLODED marker and cracked-glass
+image overlay. Undo remains outside the locked controls for corrections.
+Campaign Aftermath reads the explosion flag; normal Finish game resets it.
+Complete package with all prior features.
+
+VERSION 0.24.1 — NO EXTRA MAINTENANCE CHECKBOX
+Removed Other table effects and objectives resolved. After resolving all
+required dice, use the confirmation button directly. Missing Heat, impact,
+weapon and round-end dice still require resolution. Complete package.
+
+VERSION 0.24 — SIMPLIFIED HEAT CONTROLS
+Removed the Heat override panel, Manual Heat selector and explanatory block.
+Named actions calculate Heat normally; tap the Heat track for corrections.
+Old saved override settings no longer affect action costs. Actions + uses +1.
+Complete package with all previous features.
+
+VERSION 0.23.1 — HEAT WINDOW SCROLL FIX
+Rolling or applying Heat results preserves the current Rig and scroll position
+in the dialog, including when result text changes its height.
+All previous features are included.
+
 VERSION 0.23 — MAXIMUM HEAT ACTION ROLLS
 At maximum Heat, named actions and the manual Actions + counter open a D12
 Heat Threshold check. This includes actions that reach the maximum and Cold
