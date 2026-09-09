@@ -1,3 +1,12 @@
+VERSION 0.26 — Pre-game Engagement and destroyed Rigs
+Engagement removed from squadron creation. Normal games have a preparation screen; campaigns choose in Hangar before deployment. Destroyed Rigs have red locked sheets and a burnt image; explosion confirmation and correction via Undo remain available. Includes all previous changes.
+
+VERSION 0.25.2 — Squadron placement and random formation
+Squadron panel is directly below Engagement on every device. Random formation excludes Custom and respects campaign setup choices. Available in campaign deployment too. Includes all previous changes.
+
+VERSION 0.25.1 — Delete squadron
+Delete a current normal game or draft from its menu card, with confirmation. Saved copies and campaigns are preserved. Includes all previous changes.
+
 VERSION 0.25 — SHUT DOWN AND EXPLODED RIGS
 Power-symbol Shut Down sits beside Activated. Before spending any Actions it
 forfeits the activation and cools to 0, subject to engine damage / heat lock.
