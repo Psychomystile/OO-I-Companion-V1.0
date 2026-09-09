@@ -92,3 +92,5 @@ button,input,select{min-height:44px}button{touch-action:manipulation}.counter{ga
 
 /* v0.21: all controls stay inside Rig cards */
 .battle-open main{padding-bottom:32px}.battle-open footer{padding-bottom:max(24px,env(safe-area-inset-bottom))}.battle-open #notice{bottom:24px}.card-actions{padding:12px 0;margin-bottom:8px;border-bottom:1px solid var(--line)}.card-actions .row{flex-wrap:wrap}.battle-card .rig-banner{cursor:pointer}.card-actions .quick-actions summary{min-height:44px}.card-actions .quick-actions button{min-height:44px}
+
+.action-history{margin:4px 0 14px;padding:8px 12px;background:#111718;border:1px solid var(--line);border-radius:6px}.action-history ol{margin:0;padding-left:22px}.action-history li{padding:5px 0;overflow-wrap:anywhere}.action-history li small{display:block;color:var(--muted);margin-top:2px}.action-history p{margin:0}

@@ -1,0 +1,57 @@
+VERSION 0.23 — MAXIMUM HEAT ACTION ROLLS
+At maximum Heat, named actions and the manual Actions + counter open a D12
+Heat Threshold check. This includes actions that reach the maximum and Cold
+shots made while already at maximum Heat. Available Actions still limit use.
+Enter or roll the D12, resolve any repeats / impact / weapon dice, then confirm.
+Effects apply to that Rig without Exhaust, Ruptured damage or round advancement.
+Cancel action restores the pre-action trackers and recorded action list.
+Both normal games and campaign Engagements use this behavior.
+All previous features and images are included in this complete package.
+
+VERSION 0.22 — ACTION HISTORY
+Named actions appear below Actions used, with weapon details and Heat cost.
+Undo and decreasing Actions remove the corresponding recorded entries.
+History is saved with battle trackers and clears at the next round.
+Manual counter changes do not invent an action name. Complete package.
+
+VERSION 0.21.1 — PIVOT BUTTON REMOVED
+Move includes one Pivot up to 90 degrees at its start or end.
+No separate Pivot button or additional Action/Heat charge.
+All earlier features are included.
+
+VERSION 0.21 — SELECTABLE CARDS, NO FLOATING DOCK
+Click a Rig card or its name in the top bar to select it. Selection does not
+end its activation; use Activated / Not activated for that game marker.
+The floating bottom dock is removed. Named actions and Undo are inside each
+Rig card, alongside the existing Heat, Actions and activation controls.
+All previous features, including v0.20 dashboard status icons, are included.
+
+VERSION 0.20 — SQUARE DASHBOARD STATUS BUTTONS
+Monochrome vector symbols on dark square buttons, with the status name below.
+Active symbols glow ochre. Off / Active labels removed; pressed states remain
+available to assistive technology. Permanent conditions stay protected.
+Includes all previous changes. Upload the full images folder, including SVGs.
+
+VERSION 0.19 — CONDITION ICON BUTTONS
+Condition buttons now sit immediately below the Rig illustration.
+Original Stalled, Shocked, Slowed, Immobilised and Ruptured icons are extracted
+from Rulebook V1 p.35. Active conditions are highlighted and labelled.
+Permanent component conditions remain active; repair the component to remove
+their source. Ruptured opens the affected-component checkboxes.
+Includes all previous changes. Upload images/status with all other files.
+
+VERSIONE COMPLETA 0.18
+
+1. Estrai questo ZIP: non servono le versioni precedenti.
+2. Sostituisci i file del progetto VS Code, includendo icons e images.
+3. Pubblica sullo stesso progetto Netlify tramite GitHub o caricamento cartella.
+4. Ricarica la pagina. I salvataggi usano la stessa chiave e lo stesso indirizzo.
+
+Novita: calore delle azioni nominate automatico (Cold = 0), limite azioni con
+Stalled, velocita con Shocked/Slowed, Pivot per Immobilised, scadenza condizioni,
+e tiro delle braccia anche durante il combattimento. Il modificatore ACC delle
+condizioni e mostrato separatamente: applicalo una volta al tiro dell'attacco.
+Per gli altri effetti speciali puoi attivare l'override manuale del calore.
+
+Questo aggiornamento conserva campagne, Maintenance, Engagement, squadron,
+immagini, navigazione touch e funzioni delle versioni precedenti.
