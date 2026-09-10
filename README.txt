@@ -1,3 +1,6 @@
+VERSION 0.27 — Pregame and simplified battle sheets
+Equipment grouped by official tables A/B/C; Colossal Hull weapons grouped separately. Pregame: Engagement, Deployment (with rulebook maps), terrain density and terrain type, with manual/random selection. Campaign terrain carries into Aftermath. Named action buttons/history removed; action counter, automatic Heat and manual Heat track retained. Component impact D12 ranges displayed. Includes all previous changes.
+
 VERSION 0.26.1 — Jump to selected Rig
 Selecting a Rig name scrolls to its battle sheet on all devices, accounting for the sticky mobile navigation and reduced-motion preferences. Normal games and campaigns share this behavior. Includes all previous changes.
 

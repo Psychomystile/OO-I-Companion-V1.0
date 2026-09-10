@@ -107,3 +107,5 @@ button,input,select{min-height:44px}button{touch-action:manipulation}.counter{ga
 .battle-card.destroyed .activation-marker{background:#8c2028;color:#fff;border-color:#ff6b6b;opacity:1;box-shadow:0 0 12px #f4433655}
 .battle-card.destroyed .rig-banner img{filter:grayscale(1) brightness(.42) sepia(.25)}
 .battle-card.destroyed:not(.rig-exploded) .rig-banner::after{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at 65% 65%,#130000de,transparent 65%),linear-gradient(135deg,#ff330033,transparent 45%,#060606c9);z-index:2}
+
+.pregame-panel{margin-bottom:20px}.deployment-map{display:block;width:100%;max-width:850px;height:auto;margin:12px auto}.equipment-category{width:100%;grid-column:1/-1}.component-head .badge{font-size:.75rem;white-space:nowrap}
