@@ -1,3 +1,6 @@
+VERSION 0.28 — Faction selection, Hull slots, Heat roll
+New squadrons choose a faction through swipeable illustrated cards with lore before the builder opens. Hull weapons are available only for the Hull slot, including the campaign market. Maintenance uses one D12 & Apply button for Heat and follow-up impact rolls. Existing visual style retained. Includes all prior changes.
+
 VERSION 0.27 — Pregame and simplified battle sheets
 Equipment grouped by official tables A/B/C; Colossal Hull weapons grouped separately. Pregame: Engagement, Deployment (with rulebook maps), terrain density and terrain type, with manual/random selection. Campaign terrain carries into Aftermath. Named action buttons/history removed; action counter, automatic Heat and manual Heat track retained. Component impact D12 ranges displayed. Includes all previous changes.
 

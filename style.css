@@ -109,3 +109,6 @@ button,input,select{min-height:44px}button{touch-action:manipulation}.counter{ga
 .battle-card.destroyed:not(.rig-exploded) .rig-banner::after{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at 65% 65%,#130000de,transparent 65%),linear-gradient(135deg,#ff330033,transparent 45%,#060606c9);z-index:2}
 
 .pregame-panel{margin-bottom:20px}.deployment-map{display:block;width:100%;max-width:850px;height:auto;margin:12px auto}.equipment-category{width:100%;grid-column:1/-1}.component-head .badge{font-size:.75rem;white-space:nowrap}
+
+/* Faction onboarding retains the existing app style. */
+.faction-choice{max-width:980px;margin:auto}.faction-carousel{display:flex;gap:16px;overflow-x:auto;scroll-snap-type:x mandatory;margin-top:16px;padding:4px 0 16px}.faction-slide{flex:0 0 100%;min-width:0;scroll-snap-align:start;box-sizing:border-box}.faction-slide img{width:100%;height:auto;aspect-ratio:2.35;object-fit:cover;border-radius:5px;margin-bottom:16px}.faction-lore{font-size:1rem;line-height:1.65;margin:12px 0 22px;max-width:70ch;}.faction-choice button{min-height:44px}
