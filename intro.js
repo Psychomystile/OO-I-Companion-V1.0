@@ -8,7 +8,7 @@
   if(!trigger||trigger.disabled||replaying)return;
   event.preventDefault();event.stopImmediatePropagation();if(active)return;
   const dialog=document.createElement('dialog');dialog.className='entry-dialog';dialog.setAttribute('aria-label','Enter your Rig');
-  dialog.innerHTML='<div class="entry-stage"><div class="entry-frame"><div class="entry-window"><img class="entry-art" src="images/intro/entry-sequence.png" alt="Entering the Rig"></div><button type="button" class="entry-start" aria-label="Start Engine" hidden></button></div></div><div class="entry-footer"><span class="entry-status" role="status">Entering Rig…</span><button type="button" class="entry-skip">Skip intro</button></div><div class="entry-launch" aria-hidden="true"><div class="entry-door entry-door-left"></div><div class="entry-door entry-door-right"></div></div>';
+  dialog.innerHTML='<div class="entry-stage"><div class="entry-frame"><div class="entry-window"><img class="entry-art" src="images/intro/entry-sequence.png" alt="Entering the Rig"></div><button type="button" class="entry-start" aria-label="Start Engine" hidden></button></div></div><div class="entry-footer"><span class="entry-status" role="status">Entering Rig…</span><button type="button" class="entry-skip">Skip intro</button></div><div class="entry-launch" aria-hidden="true"><img class="entry-hangar" src="images/intro/hangar-exit.png" alt=""><div class="entry-whiteout"></div></div>';
   document.body.append(dialog);active=dialog;
   const frame=dialog.querySelector('.entry-frame'),view=dialog.querySelector('.entry-window'),art=dialog.querySelector('.entry-art'),start=dialog.querySelector('.entry-start'),skip=dialog.querySelector('.entry-skip'),status=dialog.querySelector('.entry-status');
   const motion=matchMedia('(prefers-reduced-motion: reduce)');
@@ -32,11 +32,21 @@
   function cleanup(){if(closed)return;closed=true;clear();window.removeEventListener('resize',fit);window.visualViewport?.removeEventListener('resize',fit);window.visualViewport?.removeEventListener('scroll',fit);document.documentElement.style.overflow=previousOverflow;active=null;dialog.close();dialog.remove();if(!launching)trigger.focus({preventScroll:true});}
   function beginGame(){replaying=true;try{trigger.click();}finally{replaying=false;}}
   start.addEventListener('click',()=>{
-   if(launching||!atStarter)return;launching=true;clear();start.disabled=true;dialog.classList.add('entry-launching');status.textContent='Opening hangar…';
+   if(launching||!atStarter)return;launching=true;clear();start.disabled=true;dialog.classList.add('entry-launching');status.textContent='Leaving hangar…';
    if(motion.matches){beginGame();cleanup();return;}
-   later(()=>dialog.classList.add('entry-doors-open'),180);
-   later(()=>{beginGame();dialog.classList.add('entry-reveal-game');},1450);
-   later(cleanup,2400);
+   const hangar=dialog.querySelector('.entry-hangar');let exitStarted=false;
+   function advance(){
+    if(exitStarted||closed)return;exitStarted=true;
+    dialog.classList.add('entry-moving-out');
+    later(()=>dialog.classList.add('entry-white'),1600);
+    later(()=>{beginGame();dialog.classList.add('entry-reveal-game');},4100);
+    later(cleanup,5100);
+   }
+   if(hangar.complete)advance();else{
+    hangar.addEventListener('load',advance,{once:true});
+    hangar.addEventListener('error',advance,{once:true});
+    later(advance,2500);
+   }
   });
   skip.addEventListener('click',ready);
   dialog.addEventListener('keydown',()=>dialog.classList.add('entry-keyboard'));
