@@ -2077,6 +2077,30 @@ function currentEngagement(){return availableEngagements().find(e=>e[0]===state.
 function engagementDuration(e){return e[2]?e[2]+' rounds':'4–6 rounds';}
 function pregameSettings(){return {deployment:1,density:1,terrain:0,...state.pregame};}
 function pregameLocked(){return isCampaign()?state.campaign?.phase==='battle':state.view==='battle'&&!state.preBattle;}
+function deploymentDiagram(n){
+ const rect=(x,y,w,h)=>`M${x},${y}h${w}v${h}h-${w}Z`;
+ const labels=[];const zones=[];
+ const add=(d,player,x,y,rotate=0)=>{zones.push(d);labels.push({player,x,y,rotate});};
+ switch(n){
+ case 1:add(rect(0,0,1,4),1,.5,2,-90);add(rect(5,0,1,4),2,5.5,2,90);break;
+ case 2:add(rect(0,0,6,1),2,3,.5);add(rect(0,3,6,1),1,3,3.5);break;
+ case 3:add(rect(0,0,2,4),1,1,2);add(rect(4,0,2,4),2,5,2);break;
+ case 4:add('M0,0H4V1H1V3H0Z',1,1.6,.5);add('M6,1H5V3H2V4H6Z',2,4,3.5);break;
+ case 5:add('M0,0L2,2L0,4Z',1,.7,2);add('M3,0H6V4H3L5,2Z',2,5.3,3.4);break;
+ case 6:add('M0,0H6V1Z',2,4.35,.35);add('M0,3L6,4H0Z',1,1.5,3.7);break;
+ case 7:
+  for(let i=0;i<6;i++){zones.push(rect(i,0,1,1),rect(i,3,1,1));labels.push({player:String.fromCharCode(65+i),x:i+.5,y:.5},{player:String.fromCharCode(65+i),x:i+.5,y:3.5});}break;
+ case 8:add(rect(0,0,2,1),1,1,.5);add(rect(4,0,1,2),1,4.5,1,90);add(rect(1,2,1,2),2,1.5,3,-90);add(rect(4,3,2,1),2,5,3.5);break;
+ case 9:add(rect(0,0,6,4)+' '+rect(.5,.5,5,3),1,3,.26);add(rect(1.5,1.5,3,1),2,3,2);break;
+ case 10:add(rect(0,0,2,1),1,1,.5);add(rect(5,0,1,2),2,5.5,1,90);add(rect(4,3,2,1),3,5,3.5);add(rect(0,2,1,2),4,.5,3,-90);break;
+ case 11:add(rect(0,0,2,1),1,1,.5);add(rect(4,0,2,1),2,5,.5);add(rect(0,3,2,1),3,1,3.5);add(rect(4,3,2,1),4,5,3.5);break;
+ case 12:add('M0,1L1.5,2L0,3Z',1,.48,2);add('M2,0H4L3,1.5Z',2,3,.45);add('M2,4H4L3,2.5Z',3,3,3.55);add('M6,1L4.5,2L6,3Z',4,5.52,2);break;
+ }
+ const scale=100;
+ const grid=Array.from({length:5},(_,i)=>`<path d="M${(i+1)*100} 0V400"/>`).join('')+Array.from({length:3},(_,i)=>`<path d="M0 ${(i+1)*100}H600"/>`).join('');
+ return `<div class="deployment-board"><svg viewBox="-10 -10 620 420" role="img" aria-label="Deployment ${n}, player deployment zones" xmlns="http://www.w3.org/2000/svg"><title>Deployment ${n}</title><rect class="deployment-ground" width="600" height="400" rx="4"/><g class="deployment-grid">${grid}</g><g transform="scale(${scale})" class="deployment-zones">${zones.map(d=>`<path d="${d}" fill-rule="evenodd" vector-effect="non-scaling-stroke"/>`).join('')}</g><rect class="deployment-edge" width="600" height="400" rx="4"/>${labels.map(l=>`<text class="deployment-player" x="${l.x*scale}" y="${l.y*scale}" dominant-baseline="middle" text-anchor="middle" ${l.rotate?`transform="rotate(${l.rotate} ${l.x*scale} ${l.y*scale})"`:''}>${typeof l.player==='number'?'P'+l.player:l.player}</text>`).join('')}</svg><div class="deployment-key">${n===7?'<span>Top: Player 1</span><span>Bottom: Player 2</span>':Array.from({length:n>=10?4:2},(_,i)=>`<span>P${i+1} · Player ${i+1}</span>`).join('')}</div></div>`;
+}
+
 function deploymentNote(n){
  if(n===7)return 'Take turns rolling a D6 for each Rig. Results 1–6 correspond to A–F: deploy that Rig in the matching zone on your side.';
  if(n>=10)return 'For engagements with more than two players.';
@@ -2088,7 +2112,7 @@ function battlefieldReward(e){
 function pregamePanel(){
  const p=pregameSettings(),locked=pregameLocked(),terrain=TERRAINS[p.terrain];
  const control=(key,label,values,die)=>`<label class="field"><span>${label}</span><select data-pregame="${key}" ${locked?'disabled':''}>${options(values,p[key])}</select></label><button data-pregame-random="${key}" ${locked?'disabled':''}>Random · ${die}</button>`;
- return `${engagementSelector()}<section class="panel pregame-panel"><h3>Battlefield setup</h3><div class="pregame-columns"><section class="pregame-deployment">${control('deployment','Deployment',Array.from({length:12},(_,i)=>[i+1,'Deployment '+(i+1)]),'D12')}<figure class="chosen-deployment" aria-live="polite"><figcaption>Deployment ${p.deployment} · Rulebook p. ${p.deployment<=6?93:94}</figcaption><img src="images/pregame/deployment-${String(p.deployment).padStart(2,'0')}.webp" alt="Deployment ${p.deployment}: player deployment zones from the rulebook"><p class="small">${deploymentNote(p.deployment)}</p></figure></section><section class="pregame-terrain">${control('density','Terrain density',[[0,'Low · 10%'],[1,'Medium · 30%'],[2,'High · 50%']],'D6')}<p class="small pregame-density-note">Scenery covers approximately ${[10,30,50][p.density]}% of the battlefield.</p>${control('terrain','Terrain type',TERRAINS.map((t,i)=>[i,t[0]]),'D12')}<div class="terrain-outcomes" aria-live="polite"><h3>${esc(terrain[0])}</h3><p class="small">Campaign Aftermath · Rulebook p. 103${isCampaign()?'':' · Reference only in a normal game'}</p><dl><div><dt>Victory</dt><dd>${battlefieldReward(terrain[2])}</dd></div><div><dt>Defeat</dt><dd>${battlefieldReward(terrain[1])}</dd></div></dl><p class="small">These effects apply after the engagement. Campaign engagement rewards also grant D6 Salvage for victory or D3 Salvage for defeat; objective and destroyed-Rig rewards are additional.</p></div></section></div><p class="small">Engagement-specific deployment and terrain instructions take priority.${isCampaign()?' This battlefield is carried into Aftermath.':' Campaign rewards and penalties are not applied in normal games.'}</p></section>`;
+ return `${engagementSelector()}<section class="panel pregame-panel"><h3>Battlefield setup</h3><div class="pregame-columns"><section class="pregame-deployment">${control('deployment','Deployment',Array.from({length:12},(_,i)=>[i+1,'Deployment '+(i+1)]),'D12')}<figure class="chosen-deployment" aria-live="polite"><figcaption>Deployment ${p.deployment} · Rulebook p. ${p.deployment<=6?93:94}</figcaption>${deploymentDiagram(p.deployment)}<p class="small">${deploymentNote(p.deployment)}</p></figure></section><section class="pregame-terrain">${control('density','Terrain density',[[0,'Low · 10%'],[1,'Medium · 30%'],[2,'High · 50%']],'D6')}<p class="small pregame-density-note">Scenery covers approximately ${[10,30,50][p.density]}% of the battlefield.</p>${control('terrain','Terrain type',TERRAINS.map((t,i)=>[i,t[0]]),'D12')}<div class="terrain-outcomes" aria-live="polite"><h3>${esc(terrain[0])}</h3><p class="small">Campaign Aftermath · Rulebook p. 103${isCampaign()?'':' · Reference only in a normal game'}</p><dl><div><dt>Victory</dt><dd>${battlefieldReward(terrain[2])}</dd></div><div><dt>Defeat</dt><dd>${battlefieldReward(terrain[1])}</dd></div></dl><p class="small">These effects apply after the engagement. Campaign engagement rewards also grant D6 Salvage for victory or D3 Salvage for defeat; objective and destroyed-Rig rewards are additional.</p></div></section></div><p class="small">Engagement-specific deployment and terrain instructions take priority.${isCampaign()?' This battlefield is carried into Aftermath.':' Campaign rewards and penalties are not applied in normal games.'}</p></section>`;
 };
 
 function setPregame(key,value){if(pregameLocked())return;const limits={deployment:[1,12],density:[0,2],terrain:[0,11]},range=limits[key];if(!range||!Number.isInteger(value)||value<range[0]||value>range[1])return;state.pregame={...pregameSettings(),[key]:value};render();}
@@ -2135,6 +2159,26 @@ function restoreHeatViewport(saved){
  if(anchor)dialog.scrollTop+=anchor.getBoundingClientRect().top-dialog.getBoundingClientRect().top-saved.offset;
  if(saved.field){const input=[...dialog.querySelectorAll('[data-maintenance-field]')].find(el=>el.dataset.maintenanceField===saved.field&&el.dataset.id===saved.fieldRig);if(input&&!input.disabled)input.focus({preventScroll:true});}
 }
+function renderFloatingBar(){
+ const previous=document.getElementById('floating-game-bar'),scroll=previous?.querySelector('nav')?.scrollLeft||0;
+ previous?.remove();document.body.classList.remove('has-floating-game-bar');
+ if(menuScreen!=='play'||state.maintenance)return;
+ const builder=document.querySelector('[data-field="rig-name"]');
+ const battle=state.view==='battle'&&document.querySelector('.battle-card');
+ if(!builder&&!battle)return;
+ const bar=document.createElement('aside');bar.id='floating-game-bar';
+ if(builder){
+  const used=cost(draft),capacity=ironCapacity(draft),over=used>capacity;
+  bar.className='floating-game-bar floating-iron'+(over?' iron-over':'');bar.setAttribute('aria-label','Current Rig Iron');
+  bar.innerHTML=`<div class="floating-iron-label"><strong>${esc(draft.name||rigOf(draft).name)}</strong><span>IRON</span></div><div class="floating-iron-meter"><div role="progressbar" aria-label="Iron capacity used" aria-valuemin="0" aria-valuemax="${capacity}" aria-valuenow="${Math.min(used,capacity)}" aria-valuetext="${used} of ${capacity} Iron${over?', capacity exceeded':''}" class="floating-iron-track"><span style="width:${Math.max(0,Math.min(100,used/Math.max(1,capacity)*100))}%"></span></div><span class="small" aria-live="polite">${over?'Over capacity by '+(used-capacity):capacity-used+' Iron available'}</span></div><strong class="floating-iron-count">${used}<span> / ${capacity}</span></strong>`;
+ }else{
+  bar.className='floating-game-bar floating-rigs';bar.setAttribute('aria-label','Battle Rig navigation');
+  bar.innerHTML=`<nav aria-label="Jump to Rig">${deployedRigs().map(r=>`<button data-mobile="select" data-id="${r.id}" aria-pressed="${r.id===activeRigId()}" class="${r.id===activeRigId()?'primary':''}">${esc(r.name)}${rigUnusable(r)?' · Destroyed':r.battle.activated?' · ✓':''}</button>`).join('')}</nav>`;
+ }
+ document.body.append(bar);document.body.classList.add('has-floating-game-bar');
+ const nav=bar.querySelector('nav');if(nav){nav.scrollLeft=scroll;const selected=nav.querySelector('[aria-pressed="true"]');if(selected){if(selected.offsetLeft<nav.scrollLeft)nav.scrollLeft=selected.offsetLeft;else if(selected.offsetLeft+selected.offsetWidth>nav.scrollLeft+nav.clientWidth)nav.scrollLeft=selected.offsetLeft+selected.offsetWidth-nav.clientWidth;}}
+}
+
 function render(){
  const heatViewport=captureHeatViewport();
  const open=[...document.querySelectorAll('details[open]')].map(el=>el.id||[...document.querySelectorAll('details')].indexOf(el));
@@ -2146,6 +2190,7 @@ function render(){
  if(!storageOK){const app=document.getElementById('app');app.innerHTML='<div class="warning" role="alert">Browser saving is unavailable or full. '+(campaignStarted()?'<button data-c-action="backup">Export campaign backup now</button>':'Keep this page open until you can save your data.')+'</div>'+app.innerHTML;}
  restoreHeatViewport(heatViewport);
  startFactionGalleries();
+ renderFloatingBar();
 }
 function resetDraft(){selected=DATA.rigs.find(r=>r.faction===state.faction).id;draft=newConfig(DATA.rigs.find(r=>r.id===selected));editing=null;}
 function battleChanged(){return state.squad.some(r=>r.battle&&(r.battle.heat||r.battle.actions||r.battle.activated||r.battle.sp.some((n,i)=>n!==rigOf(r).sp[i])||r.battle.conditions.length||r.battle.notes));}
@@ -2228,7 +2273,7 @@ function init(){
  catch{loadError=true;storageOK=false;}
  resetDraft();
  document.addEventListener('click',handleClick);document.addEventListener('change',handleChange);
- document.addEventListener('input',ev=>{if(['squad-name','notes','ironclad-name'].includes(ev.target.dataset.field)||ev.target.dataset.cPilotName)handleChange(ev);if(ev.target.dataset.field==='rig-name')draft.name=ev.target.value;});
+ document.addEventListener('input',ev=>{if(['squad-name','notes','ironclad-name'].includes(ev.target.dataset.field)||ev.target.dataset.cPilotName)handleChange(ev);if(ev.target.dataset.field==='rig-name'){draft.name=ev.target.value;renderFloatingBar();}});
  if(loadError){try{const raw=localStorage.getItem(KEY);if(raw)localStorage.setItem(KEY+'-recovery-'+Date.now(),raw);}catch{}}
  render();if(loadError)notify('Save unreadable or unavailable. Opened a new squadron.');
 }
@@ -2665,7 +2710,7 @@ function scrollToSelectedRig(){
 }
 function selectClickedCard(target){const card=target.closest('.battle-card[data-card]');if(!card||state.maintenance)return;const id=card.dataset.card;if(!deployedRigs().some(r=>r.id===id))return;battleSelected=id;
  document.querySelectorAll('.battle-card[data-card]').forEach(el=>el.classList.toggle('selected-rig',el.dataset.card===id));
- document.querySelectorAll('.rig-navigation button[data-id]').forEach(el=>{const selected=el.dataset.id===id;el.classList.toggle('primary',selected);el.setAttribute('aria-pressed',String(selected));});
+ document.querySelectorAll('.rig-navigation button[data-id], .floating-rigs button[data-id]').forEach(el=>{const selected=el.dataset.id===id;el.classList.toggle('primary',selected);el.setAttribute('aria-pressed',String(selected));});
 }
 
 function randomFormation(){

@@ -126,3 +126,23 @@ button,input,select{min-height:44px}button{touch-action:manipulation}.counter{ga
 .pregame-density-note{margin-top:10px}.terrain-outcomes{margin-top:18px}.terrain-outcomes dl{margin:12px 0}
 .terrain-outcomes dl>div{padding:12px 0;border-bottom:1px solid var(--line)}.terrain-outcomes dt{color:var(--accent);margin-bottom:5px}.terrain-outcomes dd{margin:0}
 @media(max-width:660px){.pregame-columns{grid-template-columns:1fr}}
+
+/* Integrated deployment board */
+.deployment-board{background:var(--bg);border:1px solid var(--line);border-radius:5px;padding:12px;margin:12px 0}
+.deployment-board svg{display:block;width:100%;height:auto;overflow:visible}
+.deployment-ground{fill:var(--bg)}.deployment-grid{fill:none;stroke:var(--line);stroke-width:1;opacity:.55}
+.deployment-zones{fill:var(--accent);fill-opacity:.09;stroke:var(--accent);stroke-width:2;stroke-linejoin:round}
+.deployment-edge{fill:none;stroke:var(--accent);stroke-width:2}
+.deployment-player{fill:var(--accent);font:500 28px Consolas,monospace;paint-order:stroke;stroke:var(--bg);stroke-width:3;stroke-linejoin:round}
+.deployment-key{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;margin-top:10px;color:var(--muted);font-size:.8rem}
+
+/* v0.28.7: persistent builder and battle controls */
+.floating-game-bar{position:fixed;z-index:45;bottom:0;left:50%;transform:translateX(-50%);box-sizing:border-box;width:min(100%,1100px);padding:10px max(14px,env(safe-area-inset-right)) max(10px,env(safe-area-inset-bottom)) max(14px,env(safe-area-inset-left));background:var(--panel);border:1px solid var(--line);border-top:2px solid var(--accent);border-radius:8px 8px 0 0;box-shadow:0 -5px 24px #0006}
+body.has-floating-game-bar{padding-bottom:calc(100px + env(safe-area-inset-bottom))}
+body.has-floating-game-bar #notice{bottom:calc(105px + env(safe-area-inset-bottom))}
+.floating-iron{display:flex;align-items:center;gap:14px}.floating-iron-label{flex:0 1 28%;min-width:0}.floating-iron-label strong{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.floating-iron-label>span{font-size:.75rem;letter-spacing:.12em;color:var(--accent)}
+.floating-iron-meter{flex:1;min-width:0}.floating-iron-track{height:8px;background:var(--bg);border-radius:4px;overflow:hidden;margin-bottom:5px}.floating-iron-track>span{height:100%;display:block;background:var(--accent);transition:width .15s}
+.floating-iron-count{white-space:nowrap;font-size:1.2rem;color:var(--accent)}.floating-iron-count>span{font-size:.9rem;color:var(--muted)}.floating-iron.iron-over{border-top-color:var(--danger)}.iron-over .floating-iron-track>span{background:var(--danger)}.iron-over .floating-iron-count{color:var(--danger)}
+.floating-rigs nav{display:flex;gap:8px;overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:thin;padding-bottom:3px}.floating-rigs button{flex-shrink:0;min-height:44px;max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@media(max-width:400px){.floating-iron{gap:8px}.floating-iron-label{flex-basis:25%}.floating-iron-meter .small{font-size:.72rem}}
+@media(prefers-reduced-motion:reduce){.floating-iron-track>span{transition:none}}

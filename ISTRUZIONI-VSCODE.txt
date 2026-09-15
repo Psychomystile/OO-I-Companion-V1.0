@@ -1,4 +1,4 @@
-AGGIORNAMENTO COMPLETO v0.28.4
+AGGIORNAMENTO COMPLETO v0.28.7
 
 1. Estrai lo ZIP.
 2. Copia TUTTO il contenuto nella cartella del progetto, dove si trova index.html.
@@ -11,6 +11,12 @@ Squadre e campagne restano nel browser: non cancellarne i dati. Questo aggiornam
 Inclusi: immagini dei 12 schieramenti, istruzioni particolari, effetti dei terreni per vittoria/sconfitta, dissolvenza delle immagini delle fazioni della v0.28.1.
 La nuova grafica cockpit, i LED e FIRE! restano nella prova interattiva: questo pacchetto aggiorna il pregame mantenendo la grafica precedente.
 
-NOVITA v0.28.4: sequenza di ingresso con le immagini approvate, sia in partita normale sia in campagna. Copiare anche intro.js, intro.css e images/intro. Le immagini sono identiche all'originale: il programma ne mostra una scena alla volta. Start Engine avvia la partita; Skip intro porta al pulsante finale.
+NOVITA v0.28.7: sequenza di ingresso con le immagini approvate, sia in partita normale sia in campagna. Copiare anche intro.js, intro.css e images/intro. Le immagini sono identiche all'originale: il programma ne mostra una scena alla volta. Start Engine avvia la partita; Skip intro porta al pulsante finale.
 
 AGGIORNAMENTO: dimensionamento della sequenza per altezza e larghezza del display, aggiornamento alla rotazione, pulsazione ambra del pulsante Start Engine. Riduci movimento: luce fissa.
+
+NOVITA: tutti i 12 schieramenti ridisegnati come pannelli vettoriali integrati, con colori e griglia dell'app. Sequenza Start Engine e regole invariate.
+
+NOVITA v0.28.7: sequenza a schermo intero nell'app, senza bagliore aggiunto; Start Engine apre due pannelli neri sulla luce bianca, poi dissolvenza nelle schede di gioco. In verticale viene ingrandita l'inquadratura mantenendo visibile il pulsante. Immagini originali invariate.
+
+NOVITA: barra Iron fissa durante la configurazione del Rig; barra nomi Rig fissa durante la partita, con scorrimento orizzontale e selezione della scheda.

@@ -1,3 +1,12 @@
+VERSION 0.28.7 - Floating Iron and Rig navigation
+Builder: fixed bottom bar shows current Rig Iron used/capacity, remaining allowance and overflow. Battle: fixed bottom row of deployed Rig names scrolls horizontally and selects/jumps to the matching card. Both normal and campaign workflows use the same controls. Bars hide during pregame, menus and Maintenance.
+
+VERSION 0.28.6 - Fullscreen entry and hangar opening
+Fullscreen app overlay with responsive proportional framing. The hand scene fades to black before the fullscreen ignition screen. No added glow or pulse on Start Engine. Pressing it opens two black hangar doors onto white, then white fades to the battle sheets. Normal and campaign starts are gated once; reduced motion skips animated transitions. Original image bytes unchanged.
+
+VERSION 0.28.5 - Integrated deployment boards
+All 12 deployment diagrams now render as native vector panels using app colours, player markers and a clear grid. No white page background or raster enlargement. Manual/random selection and campaign pregame use the same renderer.
+
 VERSION 0.28.4 - Responsive intro and ignition pulse
 Intro adapts to available width and height and recalculates on rotation/viewport resize. Entire scene retains its aspect ratio. Final ignition button pulses amber; reduced motion uses a steady glow. Original artwork and gameplay remain unchanged.
 
