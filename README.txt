@@ -1,3 +1,15 @@
+VERSION 0.28.4 - Responsive intro and ignition pulse
+Intro adapts to available width and height and recalculates on rotation/viewport resize. Entire scene retains its aspect ratio. Final ignition button pulses amber; reduced motion uses a steady glow. Original artwork and gameplay remain unchanged.
+
+VERSION 0.28.3 - Rig entry sequence
+Normal Start Game and campaign deployment show the approved four-panel artwork as a timed sequence: hatch entry, fade to black, cockpit seat, hand approaching ignition, then the interactive Start Engine screen. No artwork pixels have been changed. Only Start Engine begins the Engagement. Skip intro goes directly to the starter; Escape cancels. Reduced motion goes directly to the starter. Battle sheets and existing gameplay remain unchanged.
+
+VERSION 0.28.2 - Deployment preview and terrain outcomes
+Selected deployment map is always visible after manual or random selection. Includes 12 individual rulebook diagrams, deployment 7 instructions and multiplayer notes for 10-12. Terrain shows Victory/Defeat Aftermath effects from p. 103. Shared pregame in normal games and campaigns; normal games label campaign effects as reference only. Original visuals and save format retained.
+
+VERSION 0.28.1 — Faction Rig crossfades
+Each faction card cycles through its own Rig images every 4.5 seconds with a soft fade. Faction lore and selection stay fixed. Off-screen galleries pause; reduced-motion preference shows a static image. Includes all previous changes.
+
 VERSION 0.28 — Faction selection, Hull slots, Heat roll
 New squadrons choose a faction through swipeable illustrated cards with lore before the builder opens. Hull weapons are available only for the Hull slot, including the campaign market. Maintenance uses one D12 & Apply button for Heat and follow-up impact rolls. Existing visual style retained. Includes all prior changes.
 

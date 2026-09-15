@@ -1,100 +1,16 @@
-VERSION 0.28 — Faction selection, Hull slots, Heat roll
-New squadrons choose a faction through swipeable illustrated cards with lore before the builder opens. Hull weapons are available only for the Hull slot, including the campaign market. Maintenance uses one D12 & Apply button for Heat and follow-up impact rolls. Existing visual style retained. Includes all prior changes.
+AGGIORNAMENTO COMPLETO v0.28.4
 
-VERSION 0.27 — Pregame and simplified battle sheets
-Equipment grouped by official tables A/B/C; Colossal Hull weapons grouped separately. Pregame: Engagement, Deployment (with rulebook maps), terrain density and terrain type, with manual/random selection. Campaign terrain carries into Aftermath. Named action buttons/history removed; action counter, automatic Heat and manual Heat track retained. Component impact D12 ranges displayed. Includes all previous changes.
+1. Estrai lo ZIP.
+2. Copia TUTTO il contenuto nella cartella del progetto, dove si trova index.html.
+3. Conferma la sostituzione dei file omonimi e unisci le cartelle images e icons.
+4. In VS Code: Commit, poi Sincronizza. Se Netlify e collegato al repository, attendi il completamento del deploy.
+5. Ricarica il sito mantenendo lo stesso indirizzo.
 
-VERSION 0.26.1 — Jump to selected Rig
-Selecting a Rig name scrolls to its battle sheet on all devices, accounting for the sticky mobile navigation and reduced-motion preferences. Normal games and campaigns share this behavior. Includes all previous changes.
+Squadre e campagne restano nel browser: non cancellarne i dati. Questo aggiornamento conserva la chiave e il formato di salvataggio precedenti.
 
-VERSION 0.26 — Pre-game Engagement and destroyed Rigs
-Engagement removed from squadron creation. Normal games have a preparation screen; campaigns choose in Hangar before deployment. Destroyed Rigs have red locked sheets and a burnt image; explosion confirmation and correction via Undo remain available. Includes all previous changes.
+Inclusi: immagini dei 12 schieramenti, istruzioni particolari, effetti dei terreni per vittoria/sconfitta, dissolvenza delle immagini delle fazioni della v0.28.1.
+La nuova grafica cockpit, i LED e FIRE! restano nella prova interattiva: questo pacchetto aggiorna il pregame mantenendo la grafica precedente.
 
-VERSION 0.25.2 — Squadron placement and random formation
-Squadron panel is directly below Engagement on every device. Random formation excludes Custom and respects campaign setup choices. Available in campaign deployment too. Includes all previous changes.
+NOVITA v0.28.4: sequenza di ingresso con le immagini approvate, sia in partita normale sia in campagna. Copiare anche intro.js, intro.css e images/intro. Le immagini sono identiche all'originale: il programma ne mostra una scena alla volta. Start Engine avvia la partita; Skip intro porta al pulsante finale.
 
-VERSION 0.25.1 — Delete squadron
-Delete a current normal game or draft from its menu card, with confirmation. Saved copies and campaigns are preserved. Includes all previous changes.
-
-VERSION 0.25 — SHUT DOWN AND EXPLODED RIGS
-Power-symbol Shut Down sits beside Activated. Before spending any Actions it
-forfeits the activation and cools to 0, subject to engine damage / heat lock.
-A destroyed Rig offers Mark exploded after its explosion check at the table.
-An exploded Rig has a red locked battle sheet, EXPLODED marker and cracked-glass
-image overlay. Undo remains outside the locked controls for corrections.
-Campaign Aftermath reads the explosion flag; normal Finish game resets it.
-Complete package with all prior features.
-
-VERSION 0.24.1 — NO EXTRA MAINTENANCE CHECKBOX
-Removed Other table effects and objectives resolved. After resolving all
-required dice, use the confirmation button directly. Missing Heat, impact,
-weapon and round-end dice still require resolution. Complete package.
-
-VERSION 0.24 — SIMPLIFIED HEAT CONTROLS
-Removed the Heat override panel, Manual Heat selector and explanatory block.
-Named actions calculate Heat normally; tap the Heat track for corrections.
-Old saved override settings no longer affect action costs. Actions + uses +1.
-Complete package with all previous features.
-
-VERSION 0.23.1 — HEAT WINDOW SCROLL FIX
-Rolling or applying Heat results preserves the current Rig and scroll position
-in the dialog, including when result text changes its height.
-All previous features are included.
-
-VERSION 0.23 — MAXIMUM HEAT ACTION ROLLS
-At maximum Heat, named actions and the manual Actions + counter open a D12
-Heat Threshold check. This includes actions that reach the maximum and Cold
-shots made while already at maximum Heat. Available Actions still limit use.
-Enter or roll the D12, resolve any repeats / impact / weapon dice, then confirm.
-Effects apply to that Rig without Exhaust, Ruptured damage or round advancement.
-Cancel action restores the pre-action trackers and recorded action list.
-Both normal games and campaign Engagements use this behavior.
-All previous features and images are included in this complete package.
-
-VERSION 0.22 — ACTION HISTORY
-Named actions appear below Actions used, with weapon details and Heat cost.
-Undo and decreasing Actions remove the corresponding recorded entries.
-History is saved with battle trackers and clears at the next round.
-Manual counter changes do not invent an action name. Complete package.
-
-VERSION 0.21.1 — PIVOT BUTTON REMOVED
-Move includes one Pivot up to 90 degrees at its start or end.
-No separate Pivot button or additional Action/Heat charge.
-All earlier features are included.
-
-VERSION 0.21 — SELECTABLE CARDS, NO FLOATING DOCK
-Click a Rig card or its name in the top bar to select it. Selection does not
-end its activation; use Activated / Not activated for that game marker.
-The floating bottom dock is removed. Named actions and Undo are inside each
-Rig card, alongside the existing Heat, Actions and activation controls.
-All previous features, including v0.20 dashboard status icons, are included.
-
-VERSION 0.20 — SQUARE DASHBOARD STATUS BUTTONS
-Monochrome vector symbols on dark square buttons, with the status name below.
-Active symbols glow ochre. Off / Active labels removed; pressed states remain
-available to assistive technology. Permanent conditions stay protected.
-Includes all previous changes. Upload the full images folder, including SVGs.
-
-VERSION 0.19 — CONDITION ICON BUTTONS
-Condition buttons now sit immediately below the Rig illustration.
-Original Stalled, Shocked, Slowed, Immobilised and Ruptured icons are extracted
-from Rulebook V1 p.35. Active conditions are highlighted and labelled.
-Permanent component conditions remain active; repair the component to remove
-their source. Ruptured opens the affected-component checkboxes.
-Includes all previous changes. Upload images/status with all other files.
-
-VERSIONE COMPLETA 0.18
-
-1. Estrai questo ZIP: non servono le versioni precedenti.
-2. Sostituisci i file del progetto VS Code, includendo icons e images.
-3. Pubblica sullo stesso progetto Netlify tramite GitHub o caricamento cartella.
-4. Ricarica la pagina. I salvataggi usano la stessa chiave e lo stesso indirizzo.
-
-Novita: calore delle azioni nominate automatico (Cold = 0), limite azioni con
-Stalled, velocita con Shocked/Slowed, Pivot per Immobilised, scadenza condizioni,
-e tiro delle braccia anche durante il combattimento. Il modificatore ACC delle
-condizioni e mostrato separatamente: applicalo una volta al tiro dell'attacco.
-Per gli altri effetti speciali puoi attivare l'override manuale del calore.
-
-Questo aggiornamento conserva campagne, Maintenance, Engagement, squadron,
-immagini, navigazione touch e funzioni delle versioni precedenti.
+AGGIORNAMENTO: dimensionamento della sequenza per altezza e larghezza del display, aggiornamento alla rotazione, pulsazione ambra del pulsante Start Engine. Riduci movimento: luce fissa.

@@ -112,3 +112,17 @@ button,input,select{min-height:44px}button{touch-action:manipulation}.counter{ga
 
 /* Faction onboarding retains the existing app style. */
 .faction-choice{max-width:980px;margin:auto}.faction-carousel{display:flex;gap:16px;overflow-x:auto;scroll-snap-type:x mandatory;margin-top:16px;padding:4px 0 16px}.faction-slide{flex:0 0 100%;min-width:0;scroll-snap-align:start;box-sizing:border-box}.faction-slide img{width:100%;height:auto;aspect-ratio:2.35;object-fit:cover;border-radius:5px;margin-bottom:16px}.faction-lore{font-size:1rem;line-height:1.65;margin:12px 0 22px;max-width:70ch;}.faction-choice button{min-height:44px}
+
+/* Only the chosen faction's Rig images crossfade; lore stays still. */
+.faction-rig-gallery{position:relative;aspect-ratio:893/380;overflow:hidden;border-radius:5px;margin-bottom:16px;background:#101516}
+.faction-slide .faction-rig-gallery img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;aspect-ratio:auto;margin:0;opacity:0;transition:opacity 900ms ease-in-out}
+.faction-slide .faction-rig-gallery img.is-visible{opacity:1}
+@media(prefers-reduced-motion:reduce){.faction-slide .faction-rig-gallery img{transition:none}}
+
+/* v0.28.2: selected deployment and campaign terrain outcomes */
+.pregame-columns{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px;margin-bottom:20px}
+.chosen-deployment{margin:16px 0 0}.chosen-deployment figcaption{margin-bottom:8px;color:var(--accent)}
+.chosen-deployment img{width:100%;height:auto;display:block;border-radius:5px;margin-bottom:10px}
+.pregame-density-note{margin-top:10px}.terrain-outcomes{margin-top:18px}.terrain-outcomes dl{margin:12px 0}
+.terrain-outcomes dl>div{padding:12px 0;border-bottom:1px solid var(--line)}.terrain-outcomes dt{color:var(--accent);margin-bottom:5px}.terrain-outcomes dd{margin:0}
+@media(max-width:660px){.pregame-columns{grid-template-columns:1fr}}
