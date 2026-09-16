@@ -1,3 +1,9 @@
+AGGIORNAMENTO v0.28.9
+Sostituisci i file con il contenuto di questo ZIP completo. Include immagini e sequenza hangar. Poi Commit e Sincronizza in VS Code.
+
+Novità: pulsante obiettivo per Rig in Salvage Heist; ordinamento hangar per acquisto o classe; scheda Inventory; rottamazione dei Rig distrutti corretta.
+La rottamazione resta bloccata durante una partita o un Aftermath non concluso, e per i mercenari.
+
 AGGIORNAMENTO COMPLETO v0.28.8
 
 1. Estrai lo ZIP.

@@ -1,3 +1,12 @@
+v0.28.10 — Manual Heat Threshold dice
+Manual 1–12 result and Apply manual result restored alongside D12 & Apply, including repeat and impact rolls. Component hit ranges display numbers only.
+
+v0.28.9 — Hangar inventory and objectives
+- Salvage Heist: per-Rig carrying-objective toggle, saved and undoable. Manual marker; no automatic scoring or action cost.
+- Hangar: purchase order or class sorting. Existing roster order is used as acquisition order.
+- Inventory tab: unassigned Ironclads, stored weapons and Equipment.
+- Fixed destroyed-Rig battle lock incorrectly blocking hangar management and scrapping.
+
 VERSION 0.28.8 - Open hangar exit
 Start Engine now shows an open industrial hangar, slowly zooms toward the exit, fades to white and then reveals the Rig sheets. Replaces the black sliding-door effect. All prior updates, floating bars and original entry artwork are retained.
 
