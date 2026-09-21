@@ -1,3 +1,6 @@
+v0.28.11 — Game setup
+Campaign Game setup tab before Hangar contains Engagement, Battlefield setup and Deployment. Hangar retains Rig management and sorting. Deployment selection is shared across both views.
+
 v0.28.10 — Manual Heat Threshold dice
 Manual 1–12 result and Apply manual result restored alongside D12 & Apply, including repeat and impact rolls. Component hit ranges display numbers only.
 
