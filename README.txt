@@ -1,3 +1,9 @@
+v0.28.13 — Automatic roster comparison
+Aftermath accepts opponent roster value and displays your projected value after recovery and rewards (before reinforcement), plus the difference. Lower value automatically grants a stored D3 roll; short-handed D6 takes precedence. Credit occurs once on Apply Aftermath.
+
+v0.28.12 — Automatic short-handed reinforcement
+An incomplete formation with Short-handed deployment enabled records eligibility at battle start. Aftermath rolls D6 once, preserves it across reopening, and includes the Salvage in the existing one-time Apply Aftermath transaction. Existing unfinished reports are supported. Lower-value D3 still requires selecting the comparison with your opponent.
+
 v0.28.11 — Game setup
 Campaign Game setup tab before Hangar contains Engagement, Battlefield setup and Deployment. Hangar retains Rig management and sorting. Deployment selection is shared across both views.
 
