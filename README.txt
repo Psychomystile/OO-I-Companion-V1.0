@@ -1,3 +1,6 @@
+v0.28.17 — Profile weapons & visible app version
+Common weapons removed from the read-only Factions Rig profiles. Squadron building and loadouts retain common weapons. Current version displayed beside Unofficial companion in the header.
+
 v0.28.16 — Complete faction lore
 Click the faction summary card to open the full English lore from Rulebook V1. Includes original faction emblem, territory and faction artwork, responsive reading layout and back navigation. Nomads include Minor Corporations. Extracted text retains original wording; layout and paragraph continuations adapted for reading.
 
