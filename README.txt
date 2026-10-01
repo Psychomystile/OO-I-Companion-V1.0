@@ -1,3 +1,6 @@
+v0.28.16 — Complete faction lore
+Click the faction summary card to open the full English lore from Rulebook V1. Includes original faction emblem, territory and faction artwork, responsive reading layout and back navigation. Nomads include Minor Corporations. Extracted text retains original wording; layout and paragraph continuations adapted for reading.
+
 v0.28.15 — Original faction emblems
 Faction reference header now displays the original rulebook emblem, extracted with its transparency and shown uncropped. Five faction emblems included. Mercenary Nomads keep their name and lore because their faction page has no emblem. Individual Rig images and the faction-choice gallery are unchanged.
 
