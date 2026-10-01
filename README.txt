@@ -1,3 +1,6 @@
+v0.28.14 — Factions reference & Quick game
+Read-only faction browser from the main menu, using existing lore and Rig images. Expand Rig profiles for component SP/armour, speed, Exhaust, Iron capacity, Heat track, compatible weapons, mounting restrictions and weapon statistics. Nomads remain a separate reference faction. Normal game renamed Quick game; save keys and rules unchanged.
+
 v0.28.13 — Automatic roster comparison
 Aftermath accepts opponent roster value and displays your projected value after recovery and rewards (before reinforcement), plus the difference. Lower value automatically grants a stored D3 roll; short-handed D6 takes precedence. Credit occurs once on Apply Aftermath.
 
