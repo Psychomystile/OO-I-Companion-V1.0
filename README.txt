@@ -1,3 +1,6 @@
+v0.28.15 — Original faction emblems
+Faction reference header now displays the original rulebook emblem, extracted with its transparency and shown uncropped. Five faction emblems included. Mercenary Nomads keep their name and lore because their faction page has no emblem. Individual Rig images and the faction-choice gallery are unchanged.
+
 v0.28.14 — Factions reference & Quick game
 Read-only faction browser from the main menu, using existing lore and Rig images. Expand Rig profiles for component SP/armour, speed, Exhaust, Iron capacity, Heat track, compatible weapons, mounting restrictions and weapon statistics. Nomads remain a separate reference faction. Normal game renamed Quick game; save keys and rules unchanged.
 
