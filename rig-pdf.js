@@ -14,7 +14,7 @@ async function buildRigPDF(rigs){
   page.drawText(t,{x,y:842-top-size,size,font:f,color:rgb(.08,.09,.09)});
  };
  const rect=(x,top,w,h,fill=false)=>page.drawRectangle({x,y:842-top-h,width:w,height:h,borderWidth:.6,borderColor:rgb(.2,.2,.2),...(fill?{color:rgb(.25,.25,.25)}:{})});
- const newPage=(title)=>{page=doc.addPage([595,842]);y=56;const titleLines=lines(title,11,530);titleLines.slice(0,2).forEach((line,i)=>text(line,32,20+i*17,11,true));text('Of Oil and Iron - Unofficial Companion v0.28.24',32,816,8);};
+ const newPage=(title)=>{page=doc.addPage([595,842]);y=56;const titleLines=lines(title,11,530);titleLines.slice(0,2).forEach((line,i)=>text(line,32,20+i*17,11,true));text('Of Oil and Iron - Unofficial Companion v0.28.25',32,816,8);};
  const lines=(v,size=10,width=520)=>{
   const words=clean(v).split(/\s+/),out=[];let line='';
   for(let word of words){
@@ -57,7 +57,9 @@ async function buildRigPDF(rigs){
  doc.setTitle(state.name+' - Rig sheets');doc.setAuthor('Of Oil and Iron Companion');return doc.save();
 }
 async function exportRigPDF(button){
- if(state.view!=='build'||state.factionPending||campaignStarted()||!state.squad.length)return;button.disabled=true;const label=button.textContent;button.textContent='Preparing PDF...';
+ if(button.disabled||state.view!=='build'||state.factionPending||campaignStarted()||!state.squad.length)return;
+ const label=button.querySelector('.pdf-button-label');if(!label)return;
+ const text=label.textContent;button.disabled=true;button.setAttribute('aria-busy','true');label.textContent='Preparing PDF...';
  try{const bytes=await buildRigPDF(clone(state.squad)),blob=new Blob([bytes],{type:'application/pdf'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=(state.name.replace(/[^a-z0-9_-]/gi,'_')||'Squadron')+'-rig-sheets.pdf';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);}
- catch(e){notify('PDF export failed: '+e.message);}finally{button.disabled=false;button.textContent=label;}
+ catch(e){notify('PDF export failed: '+e.message);}finally{button.disabled=false;button.removeAttribute('aria-busy');label.textContent=text;}
 }

@@ -209,3 +209,27 @@ body.has-floating-game-bar #notice{bottom:calc(105px + env(safe-area-inset-botto
 .reroll-flags{margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}
 .reroll-flags>.row{margin:10px 0;gap:8px}.reroll-flag{min-width:48px;min-height:48px;color:var(--accent)}
 .reroll-flag.spent{background:#594725;border-color:var(--accent);color:#fff}.reroll-flag:focus-visible{outline:3px solid var(--accent)}
+
+/* Keep the same rows and button space when activation labels change. */
+.battle-card .card-heading{display:grid;grid-template-columns:minmax(0,1fr);gap:8px}
+.battle-card .card-heading .eyebrow{margin-bottom:0;overflow-wrap:anywhere}
+.battle-card .activation-controls{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;align-items:stretch;width:100%;max-width:400px}
+.activation-controls button{min-width:0;min-height:46px;white-space:nowrap;padding:9px}
+.activation-controls .power-button{justify-content:center;gap:7px}
+.power-button svg{flex-shrink:0}
+.activation-marker{font-variant-numeric:tabular-nums}
+
+/* Reserve status space so the Rig tabs do not resize or push their neighbours. */
+.rig-navigation button[data-mobile="select"],.floating-rigs button{display:inline-flex;align-items:center;gap:.35em;white-space:nowrap;overflow:hidden}
+.rig-nav-name{min-width:0;overflow:hidden;text-overflow:ellipsis}
+.rig-nav-status{display:inline-grid;flex-shrink:0;text-align:left}
+.rig-nav-status::after{content:"✓ Activated";visibility:hidden;grid-area:1/1}
+.rig-nav-status>span{grid-area:1/1}
+.rig-nav-indicator{display:inline-block;flex-shrink:0;width:1.1em;text-align:center}
+
+/* Progress text must not change the PDF button's size or its toolbar row. */
+[data-export-rigs]{display:inline-grid;grid-template-columns:minmax(0,1fr);max-width:100%}
+[data-export-rigs]::after{content:"Download Rig sheets · PDF";visibility:hidden;grid-area:1/1}
+.pdf-button-label{grid-area:1/1}
+.pilot-battle-header>strong{overflow-wrap:anywhere}
+.pilot-battle-header .badge{display:inline-block;max-width:100%;white-space:normal;overflow-wrap:anywhere}
