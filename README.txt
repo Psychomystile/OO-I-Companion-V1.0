@@ -1,3 +1,6 @@
+v0.28.23 — Squad class order and concise PDFs
+Squad entries show chassis name, weight class and Ironclad grade. Builder lists, deployed Rig cards, Game Setup and PDF sheets use stable Light / Medium / Heavy / Colossal order. Class order is always primary in the hangar too; purchase-order options sort oldest/newest only within each class. Acquisition data stays intact. Under the PDF control terminal, only Equipment names and complete descriptions are printed. Weapon profiles and Armour saves remain in the terminal; the repeated battle, component and weapon summaries are removed.
+
 v0.28.22 — PDF armour saves and typewriter layout
 Armour save values appear in the right tab under each component, alongside the original hit-location ranges. PDF data uses Courier/Courier Bold, with larger 12pt weapon stats positioned above the printed underlines. Weapon names use a full header line, perks have a clear writing area and full text in the detailed profiles, and equipment entries align above the writing rules. PDF download is available only in squad creation; it is hidden in game setup, battles and campaign hangar.
 
