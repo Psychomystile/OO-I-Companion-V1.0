@@ -1,3 +1,6 @@
+v0.28.22 — PDF armour saves and typewriter layout
+Armour save values appear in the right tab under each component, alongside the original hit-location ranges. PDF data uses Courier/Courier Bold, with larger 12pt weapon stats positioned above the printed underlines. Weapon names use a full header line, perks have a clear writing area and full text in the detailed profiles, and equipment entries align above the writing rules. PDF download is available only in squad creation; it is hidden in game setup, battles and campaign hangar.
+
 v0.28.21 — Loadout styling, Ironclad profile cards and cleaner PDF components
 PDF control-terminal components show damage boxes, with hit-location ranges below; removed SP/ARM overlay and operational "ok" labels. Full component values remain in the detailed reference below. Weapons now use the existing charcoal/ochre palette and app fonts. Ironclad profile cards show grade, Aim, target modifier, Iron and (in campaign) XP/level/re-rolls; names remain editable. Card selection covers the builder, campaign pilot inventory/recruitment and mercenary grade. Existing saves remain compatible.
 

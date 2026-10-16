@@ -2743,7 +2743,7 @@ function chassisMarketField(m){const list=campaignChassis(m.source);return `<lab
 
 // Independent campaigns and a resumable standard game share one atomic browser save.
 function modeSaves(){return state.saved.filter(s=>(s.mode||'standard')===state.mode);}
-function workspaceBar(){return `<section class="workspace-bar"><div class="row"><button data-menu-action="home">Main menu</button><button data-menu-action="${isCampaign()?'campaigns':'normal'}">${isCampaign()?'Campaigns':'Quick game'}</button><span class="badge">${isCampaign()?'CAMPAIGN':'QUICK GAME'} · ${esc(state.name)}</span><button data-export-rigs ${state.squad.length?'':'disabled'}>Download Rig sheets · PDF</button></div>${campaignStarted()?`<label class="field"><span>Campaign name</span><input data-field="squad-name" maxlength="60" value="${esc(state.name)}"></label>`:''}</section>`;}
+function workspaceBar(){return `<section class="workspace-bar"><div class="row"><button data-menu-action="home">Main menu</button><button data-menu-action="${isCampaign()?'campaigns':'normal'}">${isCampaign()?'Campaigns':'Quick game'}</button><span class="badge">${isCampaign()?'CAMPAIGN':'QUICK GAME'} · ${esc(state.name)}</span>${state.view==='build'&&!state.factionPending&&!campaignStarted()?`<button data-export-rigs ${state.squad.length?'':'disabled'}>Download Rig sheets · PDF</button>`:''}</div>${campaignStarted()?`<label class="field"><span>Campaign name</span><input data-field="squad-name" maxlength="60" value="${esc(state.name)}"></label>`:''}</section>`;}
 function menuSessions(mode){return [{id:workspaces.activeId,state},...workspaces.entries].filter(e=>e.state.mode===mode);}
 function normalGameMenu(){
  const saves=state.saved.filter(s=>(s.mode||'standard')==='standard');
