@@ -1,19 +1,11 @@
-AGGIORNAMENTO COMPLETO v0.28.25
+AGGIORNAMENTO v0.28.26
 
-1. Estrai lo ZIP.
-2. Copia TUTTO il contenuto nella cartella del progetto, dove si trova index.html.
-3. Sostituisci i file omonimi e unisci le cartelle images, icons e vendor.
-4. In VS Code: Commit, poi Sincronizza. Se Netlify e collegato al repository, attendi il completamento del deploy.
-5. Ricarica il sito mantenendo lo stesso indirizzo.
+1. Estrai lo ZIP e copia TUTTO il contenuto della cartella nel progetto.
+2. Includi roster-generator.js, roster-generator.css e la cartella roster-data.
+3. In VS Code salva, Commit e Sync come negli aggiornamenti precedenti.
+4. Attendi il deploy su Netlify e riapri l’app. In alto deve comparire v0.28.26.
 
-CORREZIONI
-- I comandi Shut Down / Activated restano sulla propria riga e mantengono le dimensioni, sia premendo Activated sia terminando le azioni.
-- Il pulsante Download Rig sheets mantiene posizione e dimensioni durante la preparazione del PDF.
-- Le barre con i nomi dei Rig conservano lo scorrimento laterale e lo spazio degli indicatori di stato.
-- La scomparsa delle condizioni temporanee non scambia i pannelli aperti di armi, equipaggiamento e note.
-- Il controllo utilizzato resta nella stessa posizione visibile quando cambia il contenuto della scheda o si conclude il tiro Heat di un'azione.
-- La selezione volontaria di un altro Rig continua a portare alla relativa scheda.
-
-Il pacchetto e completo: include tutti i file, le immagini e la sequenza di ingresso gia presenti. Le correzioni valgono in Quick Game e in campagna. Gli altri aggiornamenti precedenti sono inclusi.
-
-Squadre e campagne restano nel browser: non cancellarne i dati. Questo aggiornamento conserva la chiave e il formato di salvataggio precedenti.
+Non cancellare i dati del browser: squadre e campagne restano compatibili.
+Il generatore compare dopo aver scelto la fazione, nella creazione della squadra.
+Una campagna già avviata si continua dall’hangar; il generatore non la sovrascrive.
+Per aprire la copia locale, mantieni insieme tutti i file e apri index.html.

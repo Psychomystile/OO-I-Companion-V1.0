@@ -1,3 +1,27 @@
+v0.28.26 — MISSION-AWARE ROSTER GENERATOR
+
+- After choosing a faction, use Generate roster in the builder.
+- Pick a printed formation, engagement, attacker/defender role for specials,
+  style (Random, Balanced, Fast, Firepower or Close combat), and terrain density.
+- Preview the whole squadron with weapon profiles and each Rig's tactical role.
+- Use this squadron keeps the result editable. If a squad already exists,
+  replacement asks once and keeps a named backup in Saved squadrons.
+- Engagement and density carry into Game setup, where they remain editable.
+  Changing the setup or loadout marks the tactical plan for review.
+- Generated plans survive named saves, reloads, Quick games and campaign start.
+- Existing campaigns and games in progress cannot be regenerated.
+- Faction/profile weapons and compatible common weapons only. Hull mounts,
+  Iron capacity, formation, initial campaign budget and pilot restrictions apply.
+- 78,255 verified proposals, covering 19,680 combinations of mode, faction,
+  formation, mission/side, style and terrain density. Up to four variants per
+  density; some restricted combinations have only one verified variant.
+- The app selects from this checked catalogue; it does not run the large
+  laboratory search on the phone. No account or external service is required.
+- All existing graphics, intro, images, trackers, campaign features and PDFs
+  are retained. The local save key is unchanged.
+
+DEPLOY THE COMPLETE FOLDER, INCLUDING roster-data/.
+
 v0.28.25 — Stable controls and PDF progress
 Activation controls always use a dedicated row with two stable columns: Not activated / Activated / Shut down / Destroyed no longer decide the header layout. Quick Game and campaign share this layout. Rig tabs reserve status space and retain horizontal scrolling on updates. Card interactions keep the control being used at the same viewport position, including temporary-condition expiry, threshold warnings and returning from an action Heat roll. Intentional Rig selection still scrolls to that Rig.
 

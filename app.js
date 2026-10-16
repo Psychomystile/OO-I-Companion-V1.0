@@ -1995,7 +1995,7 @@ function baseBuildView(){
  if(state.factionPending)return factionChoiceView();
  const rig=rigOf(draft);const available=DATA.rigs.filter(r=>r.faction===state.faction||(!isCampaign()&&r.faction==='nomads'));
  return `<div class="toolbar"><div><h2>Your squadron</h2><p class="small" id="save-state">${storageOK?'Automatically saved in this browser':'Saving unavailable'}</p></div><input aria-label="Squadron name" maxlength="60" data-field="squad-name" value="${esc(state.name)}"></div>
- <aside class="panel squad-panel"><div class="section-top"><h2>Squadron</h2><span class="badge">${state.squad.length} RIG</span></div><label class="field"><span>Formation (Rulebook p. 89)</span><select data-field="formation">${options(FORMATIONS.flatMap((f,i)=>!isCampaign()||[1,2,3].includes(i)?[[i,f[0]]]:[]),state.formation)}</select></label><button data-formation-random>Random formation</button>${state.formation===0?`<p class="small">Custom composition: agree with your opponent.</p>${squadronErrors().length?`<p class="warning">${squadronErrors().map(esc).join('<br>')}</p>`:''}`:`<p class="${squadronErrors().length?'warning':'good small'}">${squadronErrors().length?squadronErrors().map(esc).join(' · '):'Roster ready'}</p>`}
+ ${globalThis.OOIRosterGenerator?.builderPanel()||''}<aside class="panel squad-panel"><div class="section-top"><h2>Squadron</h2><span class="badge">${state.squad.length} RIG</span></div><label class="field"><span>Formation (Rulebook p. 89)</span><select data-field="formation">${options(FORMATIONS.flatMap((f,i)=>!isCampaign()||[1,2,3].includes(i)?[[i,f[0]]]:[]),state.formation)}</select></label><button data-formation-random>Random formation</button>${state.formation===0?`<p class="small">Custom composition: agree with your opponent.</p>${squadronErrors().length?`<p class="warning">${squadronErrors().map(esc).join('<br>')}</p>`:''}`:`<p class="${squadronErrors().length?'warning':'good small'}">${squadronErrors().length?squadronErrors().map(esc).join(' · '):'Roster ready'}</p>`}
  <div class="squad-list">${state.squad.length?rigsByClass().map(r=>`<article class="squad-entry"><div class="section-top"><h3>${esc(r.name)}</h3><span class="badge">${cost(r)}/${ironCapacity(r)}</span></div><p class="small">${esc(rigOf(r).name)} · ${rigOf(r).weight} · ${pilotOf(r).name}<br>${r.weapons.filter(w=>w!==null).map(w=>esc(rigOf(r).weapons[w].name)).join(' / ')}</p><div class="row"><button data-action="edit" data-id="${r.id}">Edit</button><button data-action="duplicate" data-id="${r.id}">Duplicate</button><button class="danger" data-action="remove" data-id="${r.id}">Remove</button></div></article>`).join(''):'<div class="empty"><strong>Your squadron is empty</strong>Select a Rig, an Ironclad and at least two weapons.</div>'}</div>
  <div class="stack"><button class="primary" data-action="confirm" ${!state.squad.length||squadronErrors().length?'disabled':''}>${isCampaign()?'Review and start campaign':'Continue to game setup'}</button><button data-action="save" ${!state.squad.length?'disabled':''}>Save named squadron</button><button data-action="new">New squadron</button></div>
  <details id="builder-saved"><summary>Saved squadrons (${modeSaves().length})</summary>${modeSaves().length?`<select class="saved-select" id="saved-choice" aria-label="Saved squadron">${options(modeSaves().map(s=>[s.id,`${s.name} · ${s.mode==='campaign'?'Campaign':'Standard'} · ${s.squad.length} rig`]),'')}</select><div class="row"><button data-action="load">Load</button><button data-action="delete-save" class="danger">Delete save</button></div>`:'<p class="small">Saved squadrons stay in this browser.</p>'}</details>
@@ -2074,7 +2074,7 @@ function autoActivateSpentRig(r){
 }
 function pilotBattleHeader(r){
  const p=pilotOf(r);
- return `<section class="pilot-battle-header"><strong>${esc((isCampaign()?r.campaign?.pilotName:r.ironcladName)||'Ironclad')}</strong><span class="badge">${p.name} · Aim ${p.aim}+ · Aim target modifier ${p.aim-6}</span>${campaignRigInfo(r)}</section>`;
+ return `<section class="pilot-battle-header"><strong>${esc((isCampaign()?r.campaign?.pilotName:r.ironcladName)||'Ironclad')}</strong><span class="badge">${p.name} · Aim ${p.aim}+ · Aim target modifier ${p.aim-6}</span>${campaignRigInfo(r)}</section>${globalThis.OOIRosterGenerator?.rigRole(r)||''}`;
 }
 function finishNormalGame(){
  if(isCampaign())return;
@@ -2138,7 +2138,7 @@ function pregamePanel(){
 
 function setPregame(key,value){if(pregameLocked())return;const limits={deployment:[1,12],density:[0,2],terrain:[0,11]},range=limits[key];if(!range||!Number.isInteger(value)||value<range[0]||value>range[1])return;state.pregame={...pregameSettings(),[key]:value};render();}
 function randomPregame(key){const sides=key==='density'?6:12,roll=crypto.getRandomValues(new Uint32Array(1))[0]%sides+1;setPregame(key,key==='deployment'?roll:key==='density'?Math.floor((roll-1)/2):roll-1);}
-function engagementSelector(){const e=currentEngagement(),locked=isCampaign()&&state.campaign?.phase==='battle';return `<section class="panel" style="margin-bottom:16px"><h3>Engagement</h3><div class="row"><select aria-label="Engagement" data-field="engagement" ${locked?'disabled':''}>${options(availableEngagements().map(e=>[e[0],e[1]+(e[3]?' · Special':'')+' · '+engagementDuration(e)]),e[0])}</select><button data-engagement-random ${locked?'disabled':''}>Random Engagement</button></div><p class="small">${e[1]} · ${engagementDuration(e)}. ${e[2]?'': 'End of round 4: D12 8+ ends the game. Round 5: 5+. Round 6: automatic end.'} ${e[4]}</p></section>`;}
+function engagementSelector(){const e=currentEngagement(),locked=isCampaign()&&state.campaign?.phase==='battle';return `<section class="panel" style="margin-bottom:16px"><h3>Engagement</h3><div class="row"><select aria-label="Engagement" data-field="engagement" ${locked?'disabled':''}>${options(availableEngagements().map(e=>[e[0],e[1]+(e[3]?' · Special':'')+' · '+engagementDuration(e)]),e[0])}</select><button data-engagement-random ${locked?'disabled':''}>Random Engagement</button></div>${e[3]?`<label class="field"><span>Your role</span><select data-field="engagement-side" ${locked?'disabled':''}>${options([['attacker','Attacker / Ambusher'],['defender','Defender / Target']],state.engagementSide||'attacker')}</select></label>`:''}<p class="small">${e[1]} · ${engagementDuration(e)}. ${e[2]?'': 'End of round 4: D12 8+ ends the game. Round 5: 5+. Round 6: automatic end.'} ${e[4]}</p></section>`;}
 function needsEndRoll(){return !currentEngagement()[2]&&[4,5].includes(state.round);}
 function engagementEndPanel(){const e=currentEngagement();return `<section class="component"><h3>${e[1]} · ${engagementDuration(e)}</h3>${needsEndRoll()?`<p>End of round ${state.round}: D12 ${state.round===4?'8+':'5+'} ends the Engagement.</p><div class="row"><input aria-label="Engagement end D12" type="number" min="1" max="12" data-field="end-die" value="${state.maintenance.endDie||''}"><button data-end-roll>Roll D12</button></div>`:`<p>${state.round>=(e[2]||6)?'This is the final round.':'The Engagement continues unless an early victory condition is met.'}</p>`}<label class="checkline"><input type="checkbox" data-field="early-end" ${state.maintenance.earlyEnd?'checked':''}>Scenario victory condition reached · end Engagement</label></section>`;}
 function componentColour(b,i){return b.parts[i]==='disabled'?'damage-red':b.parts[i]==='catastrophic'||b.sp[i]===0?'damage-yellow':'';}
@@ -2254,17 +2254,17 @@ function baseHandleClick(ev){
   if(!state.name.trim()){notify('Enter a squadron name.');return;}
   const existing=state.saved.find(s=>s.name===state.name&&(s.mode||'standard')===state.mode);
   if(existing&&!confirm('A squadron with this name already exists. Replace the save?'))return;
-  const save={id:existing?.id||uid(),mode:state.mode,name:state.name,faction:state.faction,formation:state.formation,squad:clone(state.squad)};
+  const save={id:existing?.id||uid(),mode:state.mode,name:state.name,faction:state.faction,formation:state.formation,squad:clone(state.squad),rosterPlan:clone(state.rosterPlan||null)};
   if(existing)state.saved[state.saved.indexOf(existing)]=save;else state.saved.push(save);
   persist();notify(storageOK?'Squadron saved in this browser.':'Could not save the squadron.');
  }
  if(action==='load'){
   const s=state.saved.find(s=>s.id===document.getElementById('saved-choice').value);if(!s||(s.mode||'standard')!==state.mode)return;
   if(state.squad.length&&!confirm('Load the saved squadron in place of the current one?'))return;
-  state.mode=s.mode||'standard';state.name=s.name;state.faction=s.faction;state.formation=s.formation;state.squad=clone(s.squad);state.squad.forEach(r=>r.battle=freshBattle(r));state.round=1;resetDraft();notify('Squadron loaded with fresh trackers.');
+  state.rosterPlan=clone(s.rosterPlan||null);state.mode=s.mode||'standard';state.name=s.name;state.faction=s.faction;state.formation=s.formation;state.squad=clone(s.squad);state.squad.forEach(r=>r.battle=freshBattle(r));state.round=1;resetDraft();notify('Squadron loaded with fresh trackers.');
  }
  if(action==='delete-save'){const sid=document.getElementById('saved-choice').value;if(!confirm('Delete this save?'))return;state.saved=state.saved.filter(x=>x.id!==sid);}
- if(action==='new'){if(state.squad.length&&!confirm('Create an empty squadron? Save the current squadron first if you want to keep it.'))return;state.squad=[];state.name='My squadron';state.round=1;state.formation=isCampaign()?1:0;state.factionPending=true;resetDraft();}
+ if(action==='new'){if(state.squad.length&&!confirm('Create an empty squadron? Save the current squadron first if you want to keep it.'))return;state.squad=[];state.rosterPlan=null;state.name='My squadron';state.round=1;state.formation=isCampaign()?1:0;state.factionPending=true;resetDraft();}
  if(action==='activated'&&r)toggleActivation(r);
  if(action==='heat'&&r)r.battle.heat=Number(value);
  if(action==='condition'&&r){const a=r.battle.conditions;a.includes(value)?a.splice(a.indexOf(value),1):a.push(value);}
@@ -2358,7 +2358,7 @@ function squadronErrors(){
  return errs;
 }
 function buildView(){return campaignStarted()?campaignView():baseBuildView();}
-function battleView(){if(!isCampaign()&&state.preBattle)return `<h2>Prepare game</h2>${pregamePanel()}<div class="row"><button data-action="view" data-value="build">Edit squadron</button><button class="primary" data-start-normal ${!state.squad.length||squadronErrors().length?'disabled':''}>Begin game</button></div>`;return `${campaignStarted()?'<div class="toolbar"><button data-c-action="open-hangar">Campaign hangar</button><button class="primary" data-c-action="finish-battle">Finish Engagement / Aftermath</button></div>':''}${baseBattleView()}`;}
+function battleView(){if(!isCampaign()&&state.preBattle)return `<h2>Prepare game</h2>${pregamePanel()}${globalThis.OOIRosterGenerator?.planPanel()||''}<div class="row"><button data-action="view" data-value="build">Edit squadron</button><button class="primary" data-start-normal ${!state.squad.length||squadronErrors().length?'disabled':''}>Begin game</button></div>`;return `${campaignStarted()?'<div class="toolbar"><button data-c-action="open-hangar">Campaign hangar</button><button class="primary" data-c-action="finish-battle">Finish Engagement / Aftermath</button></div>':''}${globalThis.OOIRosterGenerator?.planPanel()||''}${baseBattleView()}`;}
 function campaignRigInfo(r){if(!isCampaign()||!r.campaign)return '';const x=r.campaign;
  return `<div class="campaign-rig-meta"><strong>Campaign Ironclad</strong><span class="badge">Level ${x.level} · ${x.xp} XP · ${x.rerolls} re-rolls/game</span>${x.mercenary?'<span class="badge">MERCENARY · no XP or objectives</span>':''}${x.traits.length?`<details id="rig-traits-${r.id}"><summary>Permanent damage (${x.traits.length})</summary>`:''}${x.traits.map(t=>`<p class="small warning">${PARTS[t.part]}${t.part===1?' / '+SLOTS[t.slot]:''}: <b>${TRAITS[t.part][t.kind][0]}</b> — ${TRAITS[t.part][t.kind][1]}${t.locked?' (second-hand; cannot be removed)':''}</p>`).join('')}${x.traits.length?'</details>':''}${rerollFlagsView(r)}<p class="small">Permanent SPD, Exhaust, Structure and capacity changes are included. Apply armour, weapon and Heat-result modifiers manually.</p></div>`;}
 function rerollFlagsView(r){
@@ -2829,7 +2829,7 @@ function handleMenuAction(el){const a=el.dataset.menuAction;
  if(a==='load-squadron'){
   const saved=state.saved.find(s=>s.id===el.dataset.save&&(s.mode||'standard')==='standard');if(!saved){notify('This saved squadron is unavailable.');return;}
   const squad=clone(saved.squad);for(const r of squad)r.battle=freshBattle(r);
-  const next={version:1,mode:'standard',name:saved.name,faction:saved.faction,formation:saved.formation,squad,round:1,view:'build',saved:[]};
+  const next={version:1,mode:'standard',name:saved.name,faction:saved.faction,formation:saved.formation,squad,rosterPlan:clone(saved.rosterPlan||null),round:1,view:'build',saved:[]};
   if(switchWorkspace(null,'standard',next))notify('Squadron loaded. Edit it, then confirm when ready. Save with the same name to update it, or a new name to keep a variant.');return;
  }
 
@@ -2974,6 +2974,7 @@ function handleChange(ev){
 function dispatchChange(ev){
  if(ev.target.dataset.pregame){setPregame(ev.target.dataset.pregame,Number(ev.target.value));return;}
  if(state.view==='battle'){const r=state.squad.find(r=>r.id===ev.target.dataset.id);if(r&&rigUnusable(r))return;}
+ if(ev.target.dataset.field==='engagement-side'){if(!(isCampaign()&&state.campaign?.phase==='battle')&&['attacker','defender'].includes(ev.target.value)){state.engagementSide=ev.target.value;render();}return;}
  if(ev.target.dataset.field==='engagement'){if(!(isCampaign()&&state.campaign?.phase==='battle')&&availableEngagements().some(e=>e[0]===ev.target.value)){state.engagement=ev.target.value;render();}return;}
  if(state.maintenance&&['end-die','early-end'].includes(ev.target.dataset.field)){state.maintenance[ev.target.dataset.field==='end-die'?'endDie':'earlyEnd']=ev.target.type==='checkbox'?ev.target.checked:ev.target.value;persist();return;}
  if(ev.target.dataset.maintenanceField){const el=ev.target,row=state.maintenance?.rows.find(x=>x.id===el.dataset.id);if(row){row[el.dataset.maintenanceField]=el.type==='checkbox'?el.checked:el.value;persist();if(el.dataset.maintenanceField!=='die')render();}return;}
