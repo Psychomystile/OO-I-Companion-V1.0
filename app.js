@@ -2001,7 +2001,7 @@ function baseBuildView(){
  <label class="field"><span>Rig name</span><input data-field="rig-name" maxlength="45" value="${esc(draft.name)}"></label>
  <label class="field"><span>Ironclad grade</span><select data-field="pilot">${options(PILOTS.flatMap((p,i)=>isCampaign()&&i>1&&draft.pilot!==i?[]:[[i,`${p.name} · Aim ${p.aim}+ · ${p.iron} Iron`]]),draft.pilot)}</select></label>
  <label class="field"><span>Ironclad name</span><input data-field="ironclad-name" maxlength="60" placeholder="Name your Ironclad" value="${esc(draft.campaign?.pilotName??draft.ironcladName??'')}"></label>
- <div class="weapon-grid">${[0,1,...(rig.weight==='Colossal'?[2]:[])].map(slot=>`<div><label class="field"><span>${SLOTS[slot]}${slot===2?' · Hull':''}</span><select data-field="weapon" data-slot="${slot}">${weaponOptions(rig,draft.weapons[slot]??'',slot)}</select></label>${draft.weapons[slot]===null?'':weaponInfo(rig.weapons[draft.weapons[slot]])}</div>`).join('')}</div>
+ <div class="weapon-grid weapon-loadout">${[0,1,...(rig.weight==='Colossal'?[2]:[])].map(slot=>weaponPicker(rig,draft.weapons[slot],slot,'draft')).join('')}</div>
  <details id="equipment-details"><summary>Equipment <span class="badge">${draft.equipment.length} selected</span></summary><p class="small">${isCampaign()?'Campaign Equipment is available; apply its effects at the stage specified in the rules.':'Campaign-only Equipment is not available in standard battles.'}</p><div class="equipment-list">${equipmentBuilder(rig)}</div></details>
  <div class="budget ${cost(draft)>ironCapacity(draft)?'over':''}"><strong>IRON ${cost(draft)} / ${ironCapacity(draft)}</strong><span>${ironCapacity(draft)-cost(draft)} available</span></div>
  <div class="errors">${configErrors(draft).map(esc).join('<br>')}</div><button class="primary full" data-action="add" ${configErrors(draft).length?'disabled':''}>${editing?'Save changes':'Add to squadron'}</button>${editing?'<button class="full" data-action="cancel-edit" style="margin-top:8px">Cancel edit</button>':''}
@@ -2133,7 +2133,7 @@ function battleCard(r){const rig=battleProfile(r),b=r.battle,destroyed=b.parts.f
  ${stats([[pilotOf(r).aim+'+','Aim'],[rig.immobilised?'Pivot only':rig.speed+'″','Current SPD'],[rig.conditionACC,'Condition ACC'],[rig.exhaust,'Exhaust'],[cost(r)+'/'+ironCapacity(r),'Iron']])}
  <div class="track-label"><strong>Heat</strong><span class="badge">${b.heat} ${rig.heat[b.heat]===null?'· safe':`· roll D12 +${rig.heat[b.heat]}`}</span></div>
  <div class="heat-track" aria-label="Heat Track">${rig.heat.map((h,i)=>`<button class="${h===null?'':'hot'} ${b.heat===i?'current':''}" data-action="heat" data-id="${r.id}" data-value="${i}" aria-label="Heat ${i}, ${h===null?'safe':'modifier +'+h}" aria-pressed="${b.heat===i}">${h===null?'−':'+'+h}</button>`).join('')}</div>
- ${rig.heat[b.heat]!==null?`<p class="warning">Make a Heat Threshold roll during Maintenance.${b.heat===rig.heat.length-1?' At maximum Heat, also roll for each Action.':''}</p>`:''}
+ ${rig.heat[b.heat]!==null?`<p class="warning">Make a Heat Threshold roll during Maintenance.${b.heat===rig.heat.length-1?' Roll for each new Action started at maximum Heat; reaching this space does not trigger an Action roll.':''}</p>`:''}
  <div class="track-label"><span>Actions used <span class="small">/ ${actionLimit(r)} available Actions</span></span>${counter(r.id,'actions',b.actions,actionLimit(r))}</div>
  ${cardQuickActions(r)}${pendingArmView(r)}<div class="components">${PARTS.map((p,i)=>`<section class="component ${componentColour(b,i)}"><div class="component-head"><div><strong>${p} <span class="badge">${['1–4','5–7','8–10','11–12'][i]}</span></strong><span class="small">Base Armour ${rig.armour[i]}+</span></div>${counter(r.id,'sp',b.sp[i],rig.sp[i],i)}</div><select aria-label="${p} status" data-field="part-state" data-id="${r.id}" data-part="${i}">${options([['ok','Operational'],['catastrophic','Catastrophically Damaged'],['disabled','Disabled']],b.parts[i])}</select>${b.parts[i]!=='ok'?`<p class="small danger">${partHint(b,i)} Cannot be Repaired.</p>`:''}<label class="checkline"><input type="checkbox" data-field="ruptured" data-id="${r.id}" data-part="${i}" ${b.ruptured[i]?'checked':''}>Ruptured · 2 damage during Maintenance</label></section>`).join('')}</div>
  <details class="battle-weapons"><summary>Weapons and Ironclad · ${pilotOf(r).name}</summary><p class="small">Base weapon profiles. Apply Condition ACC shown above once, plus Equipment and scenario modifiers. Changing reload status does not spend Actions or change Heat.</p>${r.weapons.map((w,slot)=>w===null?'':`<section class="weapon-card ${b.weaponState[slot]==='disabled'?'unavailable damage-red':''}"><span class="eyebrow">${SLOTS[slot]}</span>${b.weaponState[slot]==='disabled'?'<strong class="unusable-label">UNUSABLE</strong>':''}<h3>${rig.weapons[w].name}</h3><span class="badge">${weaponGroupName(rig.weapons[w])} · p. ${rig.weapons[w].page}</span>${stats([[rig.weapons[w].rof,'ROF'],[rig.weapons[w].str,'STR'],[rig.weapons[w].rng+'″','RNG'],[rig.weapons[w].acc,'ACC']])}<p class="small">${esc(rig.weapons[w].perks)}</p><select aria-label="${SLOTS[slot]} status" data-field="weapon-state" data-id="${r.id}" data-slot="${slot}">${options([['ready','Ready'],...(!isMelee(rig.weapons[w])?[['reload','Reload required']]:[]),['disabled','Cannot be used']],b.weaponState[slot])}</select></section>`).join('')}</details>
@@ -2330,14 +2330,27 @@ function squadronErrors(){
 function buildView(){return campaignStarted()?campaignView():baseBuildView();}
 function battleView(){if(!isCampaign()&&state.preBattle)return `<h2>Prepare game</h2>${pregamePanel()}<div class="row"><button data-action="view" data-value="build">Edit squadron</button><button class="primary" data-start-normal ${!state.squad.length||squadronErrors().length?'disabled':''}>Begin game</button></div>`;return `${campaignStarted()?'<div class="toolbar"><button data-c-action="open-hangar">Campaign hangar</button><button class="primary" data-c-action="finish-battle">Finish Engagement / Aftermath</button></div>':''}${baseBattleView()}`;}
 function campaignRigInfo(r){if(!isCampaign()||!r.campaign)return '';const x=r.campaign;
- return `<div class="campaign-rig-meta"><strong>Campaign Ironclad</strong><span class="badge">Level ${x.level} · ${x.xp} XP · ${x.rerolls} re-rolls/game</span>${x.mercenary?'<span class="badge">MERCENARY · no XP or objectives</span>':''}${x.traits.length?`<details><summary>Permanent damage (${x.traits.length})</summary>`:''}${x.traits.map(t=>`<p class="small warning">${PARTS[t.part]}${t.part===1?' / '+SLOTS[t.slot]:''}: <b>${TRAITS[t.part][t.kind][0]}</b> — ${TRAITS[t.part][t.kind][1]}${t.locked?' (second-hand; cannot be removed)':''}</p>`).join('')}${x.traits.length?'</details>':''}${state.campaign?.phase==='battle'&&state.campaign.deployed.includes(r.id)?`<div class="row"><span class="small">Re-rolls remaining: ${Math.max(0,x.rerolls-(r.battle.rerollsUsed||0))}/${x.rerolls}</span><button data-c-action="reroll-used" data-id="${r.id}" data-value="1" ${(r.battle.rerollsUsed||0)>=x.rerolls?'disabled':''}>Use re-roll</button><button data-c-action="reroll-used" data-id="${r.id}" data-value="-1" ${!(r.battle.rerollsUsed||0)?'disabled':''}>Restore re-roll</button></div>`:''}<p class="small">Permanent SPD, Exhaust, Structure and capacity changes are included. Apply armour, weapon and Heat-result modifiers manually.</p></div>`;}
+ return `<div class="campaign-rig-meta"><strong>Campaign Ironclad</strong><span class="badge">Level ${x.level} · ${x.xp} XP · ${x.rerolls} re-rolls/game</span>${x.mercenary?'<span class="badge">MERCENARY · no XP or objectives</span>':''}${x.traits.length?`<details><summary>Permanent damage (${x.traits.length})</summary>`:''}${x.traits.map(t=>`<p class="small warning">${PARTS[t.part]}${t.part===1?' / '+SLOTS[t.slot]:''}: <b>${TRAITS[t.part][t.kind][0]}</b> — ${TRAITS[t.part][t.kind][1]}${t.locked?' (second-hand; cannot be removed)':''}</p>`).join('')}${x.traits.length?'</details>':''}${rerollFlagsView(r)}<p class="small">Permanent SPD, Exhaust, Structure and capacity changes are included. Apply armour, weapon and Heat-result modifiers manually.</p></div>`;}
+function rerollFlagsView(r){
+ const total=Math.max(0,Math.floor(Number(r.campaign?.rerolls)||0)),used=Math.min(total,r.battle?.rerollsUsed||0);
+ const active=state.campaign?.phase==='battle'&&state.campaign.deployed.includes(r.id)&&!state.maintenance&&!rigUnusable(r);
+ return `<div class="reroll-flags"><strong>Ironclad re-rolls · ${total-used}/${total} available</strong><div class="row">${Array.from({length:total},(_,i)=>`<button class="reroll-flag ${(r.battle?.rerollFlags?.[i]??(i<used))?'spent':''}" data-reroll-flag="${i}" data-id="${r.id}" aria-pressed="${!!(r.battle?.rerollFlags?.[i]??(i<used))}" aria-label="Re-roll ${i+1}: ${(r.battle?.rerollFlags?.[i]??(i<used))?'used, restore':'available, use'}" ${active?'':'disabled'}>${(r.battle?.rerollFlags?.[i]??(i<used))?'☑':'□'} ${i+1}</button>`).join('')||'<span class="small">No re-rolls earned yet.</span>'}</div><span class="small">Checked = used. Resets next game.</span></div>`;
+}
+function toggleRerollFlag(el){
+ const r=state.squad.find(x=>x.id===el.dataset.id),i=Number(el.dataset.rerollFlag);
+ if(!r||state.maintenance||state.campaign?.phase!=='battle'||!state.campaign.deployed.includes(r.id)||rigUnusable(r)||!Number.isInteger(i)||i<0||i>=r.campaign.rerolls)return;
+ const before=battleSnapshot(),used=r.battle.rerollsUsed||0;
+ r.battle.rerollFlags=Array.from({length:r.campaign.rerolls},(_,n)=>r.battle.rerollFlags?.[n]??(n<used));
+ r.battle.rerollFlags[i]=!r.battle.rerollFlags[i];r.battle.rerollsUsed=r.battle.rerollFlags.filter(Boolean).length;
+ recordBattle(before);render();
+}
 function xpAward(r,amount){
  const c=ensureRig(r);if(c.mercenary)return;
  const old=c.level;c.xp+=amount;c.level=XP_LEVELS.reduce((v,n,i)=>c.xp>=n?i+1:v,1);
  for(let level=old+1;level<=c.level;level++){if([4,7,10].includes(level)&&r.pilot<3)r.pilot++;else c.rerolls++;}
 }
 function pilotRecord(r){const c=ensureRig(r);return {id:c.pilotId,name:c.pilotName,grade:r.pilot,xp:c.xp,level:c.level,rerolls:c.rerolls};}
-function assignPilot(r,p){const c=ensureRig(r);r.pilot=p.grade;r.ironcladName=p.name;Object.assign(c,{pilotId:p.id,pilotName:p.name,xp:p.xp,level:p.level,rerolls:p.rerolls});}
+function assignPilot(r,p){const c=ensureRig(r);if(r.battle&&c.pilotId!==p.id){r.battle.rerollsUsed=0;delete r.battle.rerollFlags;}r.pilot=p.grade;r.ironcladName=p.name;Object.assign(c,{pilotId:p.id,pilotName:p.name,xp:p.xp,level:p.level,rerolls:p.rerolls});}
 function pushPilot(r){if(!r.campaign?.mercenary)state.campaign.pilots.push(pilotRecord(r));}
 function normalizeRig(r){const max=effectiveRig(r).sp;r.battle.sp=r.battle.sp.map((n,i)=>Math.min(max[i],Math.max(0,n)));}
 function inflict(b,part,amount){if(b.parts[part]==='disabled')throw Error('Select a component that is not Disabled.');if(b.parts[part]==='catastrophic'){b.parts[part]='disabled';b.sp[part]=0;}else{b.sp[part]=Math.max(0,b.sp[part]-amount);if(!b.sp[part])b.parts[part]='catastrophic';}}
@@ -2670,13 +2683,31 @@ function weaponOptions(rig,selected,slot=null,currency='Iron',placeholder=true){
 function rigCatalog(available){
  return [['Faction Rigs',available.filter(r=>r.faction!=='nomads')],['Nomad Rigs',available.filter(r=>r.faction==='nomads')]].filter(([,rigs])=>rigs.length).map(([label,rigs])=>`<section class="rig-catalog-group"><div class="section-top"><h3>${label}</h3></div>${label==='Nomad Rigs'?'<p class="small">Independent chassis, available as support in standard squadrons.</p>':''}<div class="rig-grid">${rigs.map(r=>`<button class="rig-choice ${selected===r.id?'selected':''}" data-action="rig" data-value="${r.id}"><span class="rig-mark">${r.iron} IRON</span><strong>${r.name}</strong><span class="small">${WEIGHTS[r.weight]} · SPD ${r.speed} · EXH ${r.exhaust}</span></button>`).join('')}</div></section>`).join('');
 }
-function weaponMarketField(r,value){return `<label class="field"><span>Weapon</span><select data-c-field="market.weapon">${weaponOptions(rigOf(r),value,Number(state.campaign.market.slot),'Salvage',false)}</select></label>`;}
+function weaponCardProfile(w){
+ return `<span class="loadout-card-top"><strong>${esc(w.name)}</strong><span class="weapon-iron">${w.iron}<small>IRON</small></span></span><span class="weapon-statline">${[[w.rof,'ROF'],[w.str,'STR'],[w.rng,'RNG'],[w.acc,'ACC']].map(([v,k])=>`<span><small>${k}</small><b>${esc(v)}</b></span>`).join('')}</span><span class="weapon-perks">${String(w.perks||'').split(/[,;·]/).map(x=>x.trim()).filter(x=>x&&x!=='–'&&x!=='-').map(x=>`<span>${esc(x)}</span>`).join('')||'<span>No perks</span>'}</span>`;
+}
+function weaponPicker(rig,value,slot,context){
+ const current=value===null||value===''?null:rig.weapons[Number(value)],id=`weapon-picker-${context}-${slot}`;
+ const available=rig.weapons.map((w,index)=>({w,index})).filter(({w})=>slot===2?rig.weight==='Colossal'&&isHull(w):!isHull(w));
+ return `<details class="weapon-picker" id="${id}"><summary><span class="eyebrow">${esc(SLOTS[slot])}${slot===2?' · Hull only':''}</span><span class="loadout-card">${current?weaponCardProfile(current):'<strong class="weapon-empty">Choose a weapon</strong><span class="small">Compare profiles and perks</span>'}</span><span class="weapon-picker-hint">${current?'Change weapon':'View available weapons'} <span aria-hidden="true">＋</span></span></summary><div class="weapon-catalog"><p class="small">Select a profile below.${context==='market'?' Then choose payment and equip it.':''}</p>${['faction','nomad','common'].map(group=>{const list=available.filter(({w})=>w.group===group);return list.length?`<h4>${group==='common'?'Common weapons':group==='nomad'?'Nomad weapons':'Faction weapons'}</h4><div class="weapon-option-grid">${list.map(({w,index})=>`<button type="button" class="weapon-option ${current&&Number(value)===index?'selected':''}" data-pick-weapon="${index}" data-picker-context="${context}" data-slot="${slot}" aria-pressed="${!!current&&Number(value)===index}">${weaponCardProfile(w)}<span class="weapon-option-foot">${current&&Number(value)===index?'Selected':'Select weapon'} · p. ${w.page}</span></button>`).join('')}</div>`:'';}).join('')}${context==='draft'&&current?`<button type="button" class="weapon-clear" data-pick-weapon="" data-picker-context="draft" data-slot="${slot}">Remove weapon</button>`:''}</div></details>`;
+}
+function pickWeaponCard(el){
+ const slot=Number(el.dataset.slot),context=el.dataset.pickerContext,value=el.dataset.pickWeapon;
+ const rig=context==='market'?rigOf(currentMarketRig()):rigOf(draft),w=value===''?null:rig.weapons[Number(value)];
+ if(value!==''&&(!w||(slot===2?(rig.weight!=='Colossal'||!isHull(w)):isHull(w))))return;
+ const id=`weapon-picker-${context}-${slot}`,old=document.getElementById(id),top=old?.getBoundingClientRect().top;
+ if(old)old.open=false;
+ if(context==='market'){state.campaign.market.weapon=Number(value);render();}
+ else baseHandleChange({target:{dataset:{field:'weapon',slot:String(slot)},value}});
+ const next=document.getElementById(id);if(next){next.open=false;next.querySelector('summary').focus({preventScroll:true});if(top!==undefined)window.scrollBy(0,next.getBoundingClientRect().top-top);}
+}
+function weaponMarketField(r,value){return weaponPicker(rigOf(r),value,Number(state.campaign.market.slot),'market');}
 function campaignChassis(source){return DATA.rigs.filter(x=>source==='mercenary'?x.faction==='nomads'&&['Light','Medium'].includes(x.weight):x.faction===state.faction);}
 function chassisMarketField(m){const list=campaignChassis(m.source);return `<label class="field"><span>Chassis</span><select data-c-field="market.chassis">${[['Faction Rigs',false],['Nomad Rigs',true]].map(([label,nomad])=>{const rigs=list.filter(x=>(x.faction==='nomads')===nomad);return rigs.length?`<optgroup label="${label}">${options(rigs.map(x=>[x.id,`${x.name} · ${x.weight} · ${RECRUIT_COST[x.weight]} Salvage`]),m.chassis)}</optgroup>`:'';}).join('')}</select></label>`;}
 
 // Independent campaigns and a resumable standard game share one atomic browser save.
 function modeSaves(){return state.saved.filter(s=>(s.mode||'standard')===state.mode);}
-function workspaceBar(){return `<section class="workspace-bar"><div class="row"><button data-menu-action="home">Main menu</button><button data-menu-action="${isCampaign()?'campaigns':'normal'}">${isCampaign()?'Campaigns':'Quick game'}</button><span class="badge">${isCampaign()?'CAMPAIGN':'QUICK GAME'} · ${esc(state.name)}</span></div>${campaignStarted()?`<label class="field"><span>Campaign name</span><input data-field="squad-name" maxlength="60" value="${esc(state.name)}"></label>`:''}</section>`;}
+function workspaceBar(){return `<section class="workspace-bar"><div class="row"><button data-menu-action="home">Main menu</button><button data-menu-action="${isCampaign()?'campaigns':'normal'}">${isCampaign()?'Campaigns':'Quick game'}</button><span class="badge">${isCampaign()?'CAMPAIGN':'QUICK GAME'} · ${esc(state.name)}</span><button data-export-rigs ${state.squad.length?'':'disabled'}>Download Rig sheets · PDF</button></div>${campaignStarted()?`<label class="field"><span>Campaign name</span><input data-field="squad-name" maxlength="60" value="${esc(state.name)}"></label>`:''}</section>`;}
 function menuSessions(mode){return [{id:workspaces.activeId,state},...workspaces.entries].filter(e=>e.state.mode===mode);}
 function normalGameMenu(){
  const saves=state.saved.filter(s=>(s.mode||'standard')==='standard');
@@ -2793,6 +2824,9 @@ function randomFormation(){
  state.formation=pool[crypto.getRandomValues(new Uint32Array(1))[0]%pool.length];render();
 }
 function handleClick(ev){
+ const pdf=ev.target.closest('[data-export-rigs]');if(pdf){exportRigPDF(pdf);return;}
+ const flag=ev.target.closest('[data-reroll-flag]');if(flag){toggleRerollFlag(flag);return;}
+ const weaponChoice=ev.target.closest('button[data-pick-weapon]');if(weaponChoice){pickWeaponCard(weaponChoice);return;}
  selectClickedCard(ev.target);
  const el=ev.target.closest('button');if(!el||el.disabled)return;
  const d=el.dataset;
@@ -2883,7 +2917,7 @@ function legacyMaintenanceAction(action){
 
 function beginActionHeatCheck(r,before){
  if(state.maintenance||r.battle.heat<effectiveRig(r).heat.length-1)return;
- const old=before.rigs.find(x=>x.id===r.id)?.battle;if(!old||r.battle.actions<=old.actions)return;
+ const old=before.rigs.find(x=>x.id===r.id)?.battle;if(!old||old.heat<effectiveRig(r).heat.length-1||r.battle.actions<=old.actions)return;
  const modifier=effectiveRig(r).heat[r.battle.heat]??0;
  state.maintenance={automatic:true,actionCheck:true,actionBefore:clone(old),rows:[{id:r.id,original:clone(r.battle),preview:clone(r.battle),modifier,required:true,done:false,die:'',extra:(r.equipment.some(id=>DATA.equipment[id].name==='Exotic Engine Coolant')?-1:0)+(r.campaign?.traits.some(t=>t.part===3&&t.kind===0)?1:0),log:[],location:false}]};
 }

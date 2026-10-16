@@ -1,3 +1,12 @@
+v0.28.20 — PDF Rig sheets and Ironclad re-roll flags
+Download Rig sheets · PDF exports the entire current squadron, with current damage, Heat, weapons, Equipment and Ironclad data. Standard and Colossal sheet artwork comes from the supplied rulebook (Scoutsifer Studio). Long profiles continue on extra pages. Export requires no external service; PDF library is bundled locally. Re-roll checkboxes track campaign advancement rewards, migrate existing spent counts, reset on new games and clear when the assigned pilot changes. Quick Game grades do not receive campaign re-rolls automatically.
+
+v0.28.20 — Visual weapon selection
+Weapon cards show Iron, ROF, STR, RNG, ACC and perks before selection. Shared picker in squad creation and campaign market; common weapons retained; Hull restrictions retained. Existing browser saves unchanged.
+
+v0.28.20 — Heat Threshold timing
+Actions that first reach maximum Heat no longer trigger an immediate roll. Further Actions started at maximum Heat trigger the check. Applies to Quick game and campaign, counter and named actions. Maintenance rolls are unchanged.
+
 v0.28.17 — Profile weapons & visible app version
 Common weapons removed from the read-only Factions Rig profiles. Squadron building and loadouts retain common weapons. Current version displayed beside Unofficial companion in the header.
 
