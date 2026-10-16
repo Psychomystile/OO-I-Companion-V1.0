@@ -1,3 +1,6 @@
+v0.28.21 — Loadout styling, Ironclad profile cards and cleaner PDF components
+PDF control-terminal components show damage boxes, with hit-location ranges below; removed SP/ARM overlay and operational "ok" labels. Full component values remain in the detailed reference below. Weapons now use the existing charcoal/ochre palette and app fonts. Ironclad profile cards show grade, Aim, target modifier, Iron and (in campaign) XP/level/re-rolls; names remain editable. Card selection covers the builder, campaign pilot inventory/recruitment and mercenary grade. Existing saves remain compatible.
+
 v0.28.20 — PDF Rig sheets and Ironclad re-roll flags
 Download Rig sheets · PDF exports the entire current squadron, with current damage, Heat, weapons, Equipment and Ironclad data. Standard and Colossal sheet artwork comes from the supplied rulebook (Scoutsifer Studio). Long profiles continue on extra pages. Export requires no external service; PDF library is bundled locally. Re-roll checkboxes track campaign advancement rewards, migrate existing spent counts, reset on new games and clear when the assigned pilot changes. Quick Game grades do not receive campaign re-rolls automatically.
 
