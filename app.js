@@ -2047,14 +2047,30 @@ function spendAction(r,delta,heatCost=null,label=null){
   b.heat=Math.min(effectiveRig(r).heat.length-1,b.heat+cost);
   b.actionHistory.push({action:b.actions+1,heat:b.heat-previous,cost,label});b.actions++;
  }else if(delta<0&&b.actions>0){
+  const automatic=b.autoActivationBefore;
+  if(automatic&&b.activated){
+   toggleActivation(r);
+   b.activationConditions=clone(automatic.activationConditions);
+   b.expiredConditions=[...automatic.expiredConditions];
+   b.weaponState=automatic.weaponState.map((status,i)=>b.weaponState[i]==='disabled'?'disabled':status);
+  }
   const last=b.actionHistory.at(-1);
   if(last?.action===b.actions){b.heat=Math.max(0,b.heat-last.heat);b.actionHistory.pop();}
   b.actions--;
  }
 }
 function toggleActivation(r){
- const b=r.battle;if(rigUnusable(r)||b.shutDown)return;if(b.skipActivation){notify('This Rig must skip this activation after Emergency Shutdown.');return;}b.activated=!b.activated;
+ const b=r.battle;if(rigUnusable(r)||b.shutDown)return;if(b.skipActivation){notify('This Rig must skip this activation after Emergency Shutdown.');return;}delete b.autoActivationBefore;b.activated=!b.activated;
  if(b.activated){b.expiredConditions=[...(b.activationConditions||b.conditions)].filter(c=>!permanentConditions(b).includes(c));b.conditions=b.conditions.filter(c=>!b.expiredConditions.includes(c));b.activationConditions=null;b.weaponState=b.weaponState.map(w=>w==='reload'?'ready':w);}else{b.conditions=[...new Set([...b.conditions,...(b.expiredConditions||[])])];b.expiredConditions=[];}
+}
+// Resolve the last action (including its Heat roll) before ending the activation.
+function autoActivateSpentRig(r){
+ const b=r.battle,limit=actionLimit(r);
+ if(state.maintenance||b.activated||rigUnusable(r)||b.shutDown||b.skipActivation||limit<=0||b.actions<limit)return false;
+ const before={activationConditions:clone(b.activationConditions??null),expiredConditions:[...(b.expiredConditions||[])],weaponState:[...b.weaponState]};
+ toggleActivation(r);
+ if(b.activated)b.autoActivationBefore=before;
+ return b.activated;
 }
 function pilotBattleHeader(r){
  const p=pilotOf(r);
@@ -2245,7 +2261,7 @@ function baseHandleClick(ev){
  if(action==='condition'&&r){const a=r.battle.conditions;a.includes(value)?a.splice(a.indexOf(value),1):a.push(value);}
  if(action==='counter'&&r){const b=r.battle;if(el.dataset.kind==='actions')spendAction(r,Number(value));else{const part=Number(el.dataset.part);if(Number(value)<0&&b.parts[part]==='catastrophic')b.parts[part]='disabled';b.sp[part]=Math.max(0,Math.min(rigOf(r).sp[part],b.sp[part]+Number(value)));if(b.sp[part]===0&&b.parts[part]==='ok')b.parts[part]='catastrophic';if(b.sp[part]>0)b.parts[part]='ok';}}
  if(action==='reset-battle'){if(!confirm('Reset the battle and restore all Rigs?'))return;state.squad.forEach(r=>r.battle=freshBattle(r));state.round=1;}
- if(action==='next-round'){if(!confirm('Have you resolved Maintenance, Heat and Ruptured? Advance to the next round and reset only Actions and activation markers?'))return;state.round++;state.squad.forEach(r=>{r.battle.shutDown=false;r.battle.actions=0;r.battle.actionHistory=[];r.battle.activationConditions=null;r.battle.activated=false;});}
+ if(action==='next-round'){if(!confirm('Have you resolved Maintenance, Heat and Ruptured? Advance to the next round and reset only Actions and activation markers?'))return;state.round++;state.squad.forEach(r=>{r.battle.shutDown=false;r.battle.actions=0;delete r.battle.autoActivationBefore;r.battle.actionHistory=[];r.battle.activationConditions=null;r.battle.activated=false;});}
  render();
 }
 function baseHandleChange(ev){
@@ -2905,13 +2921,14 @@ function handleClick(ev){
    if(d.name==='Fire')r.battle.weaponState[slot]='reload';
    if(d.name==='Reload')r.battle.weaponState[slot]='ready';
    beginActionHeatCheck(r,before);
+   autoActivateSpentRig(r);
    recordBattle(before);render();return;
   }
  }
  const track=state.view==='battle'&&(['activated','heat','counter','condition','next-round','reset-battle'].includes(d.action)||d.cAction==='reroll-used');
  const before=track?battleSnapshot():null;
  previousHandleClick(ev);
- if(before){if(d.action==='counter'&&d.kind==='actions'&&Number(d.value)>0){const r=state.squad.find(r=>r.id===d.id);if(r)beginActionHeatCheck(r,before);}for(const old of before.rigs){const r=state.squad.find(r=>r.id===old.id);if(r)syncComponentDamage(r,old.battle);}recordBattle(before);render();}
+ if(before){if(d.action==='counter'&&d.kind==='actions'&&Number(d.value)>0){const r=state.squad.find(r=>r.id===d.id);if(r)beginActionHeatCheck(r,before);}for(const old of before.rigs){const r=state.squad.find(r=>r.id===old.id);if(r)syncComponentDamage(r,old.battle);}if(d.action==='counter'&&d.kind==='actions'&&Number(d.value)>0){const r=state.squad.find(r=>r.id===d.id),old=before.rigs.find(r=>r.id===d.id);if(r&&old&&r.battle.actions>old.battle.actions)autoActivateSpentRig(r);}recordBattle(before);render();}
  // Battle history is scoped to an Engagement and must not undo campaign transitions.
  if(d.cAction&&d.cAction!=='reroll-used'){battleUndo.delete(workspaces.activeId);if(state.view==='battle')render();}
 }
@@ -2942,7 +2959,7 @@ function legacyMaintenanceAction(action){
  if(action==='cool'){
   if(m.cooled)return;
   if(m.rows.some(row=>row.required&&(!row.resolved||!Number.isInteger(Number(row.die))||Number(row.die)<1||Number(row.die)>12||!Number.isInteger(Number(row.extra))||Math.abs(Number(row.extra))>20))){notify('Enter a valid D12 result and confirm all Heat results and repeat rolls first.');return;}
-  if(m.actionCheck){const before=battleSnapshot(),row=m.rows[0],r=state.squad.find(r=>r.id===row.id);if(!r)return;r.battle=maintenanceFinal(row);if(row.armDie)r.battle.pendingArm=false;state.maintenance=null;recordBattle(before);render();notify('Heat effects applied. Continue the activation if the Rig can still act.');return;}
+  if(m.actionCheck){const before=battleSnapshot(),row=m.rows[0],r=state.squad.find(r=>r.id===row.id);if(!r)return;r.battle=maintenanceFinal(row);if(row.armDie)r.battle.pendingArm=false;state.maintenance=null;autoActivateSpentRig(r);recordBattle(before);render();notify(r.battle.activated?'Heat effects applied. Rig activated.':'Heat effects applied. Continue the activation if the Rig can still act.');return;}
   if(needsEndRoll()&&!m.earlyEnd&&(!Number.isInteger(Number(m.endDie))||Number(m.endDie)<1||Number(m.endDie)>12)){notify('Enter the Engagement end D12 first.');return;}
   const ended=!!m.earlyEnd||state.round>=(currentEngagement()[2]||6)||(needsEndRoll()&&Number(m.endDie)>=(state.round===4?8:5));
   const before=battleSnapshot();for(const row of m.rows){const r=state.squad.find(r=>r.id===row.id);if(!r)continue;const b=r.battle,rig=effectiveRig(r);row.beforeCooling=b.heat;
@@ -2952,7 +2969,7 @@ function legacyMaintenanceAction(action){
  }
  if(action==='finish'){
   if(!m.cooled){notify('Apply Exhaust first.');return;}
-  const before=battleSnapshot();state.round++;for(const r of deployedRigs()){r.battle.shutDown=false;r.battle.actions=0;r.battle.actionHistory=[];r.battle.activationConditions=null;r.battle.activated=false;}state.maintenance=null;recordBattle(before);render();notify('Maintenance complete. Next round started.');
+  const before=battleSnapshot();state.round++;for(const r of deployedRigs()){r.battle.shutDown=false;r.battle.actions=0;delete r.battle.autoActivationBefore;r.battle.actionHistory=[];r.battle.activationConditions=null;r.battle.activated=false;}state.maintenance=null;recordBattle(before);render();notify('Maintenance complete. Next round started.');
  }
 }
 
@@ -3015,11 +3032,11 @@ function maintenanceAction(action,id){
  if(action==='finish'){
   if(!m.rows.every(r=>r.done)){notify('Resolve all required rolls first.');return;}
   if(m.rows.some(row=>{const b=maintenanceFinal(row);return b.parts[1]==='catastrophic'&&row.original.parts[1]==='ok'&&(!Number.isInteger(Number(row.armDie))||Number(row.armDie)<1||Number(row.armDie)>12);})){notify('Roll which weapon is lost for damaged Arms.');return;}
-  if(m.actionCheck){const before=battleSnapshot(),row=m.rows[0],r=state.squad.find(r=>r.id===row.id);if(!r)return;r.battle=maintenanceFinal(row);if(row.armDie)r.battle.pendingArm=false;state.maintenance=null;recordBattle(before);render();notify('Heat effects applied. Continue the activation if the Rig can still act.');return;}
+  if(m.actionCheck){const before=battleSnapshot(),row=m.rows[0],r=state.squad.find(r=>r.id===row.id);if(!r)return;r.battle=maintenanceFinal(row);if(row.armDie)r.battle.pendingArm=false;state.maintenance=null;autoActivateSpentRig(r);recordBattle(before);render();notify(r.battle.activated?'Heat effects applied. Rig activated.':'Heat effects applied. Continue the activation if the Rig can still act.');return;}
   if(needsEndRoll()&&!m.earlyEnd&&(!Number.isInteger(Number(m.endDie))||Number(m.endDie)<1||Number(m.endDie)>12)){notify('Enter the Engagement end D12 first.');return;}
   const ended=!!m.earlyEnd||state.round>=(currentEngagement()[2]||6)||(needsEndRoll()&&Number(m.endDie)>=(state.round===4?8:5));
   const before=battleSnapshot();for(const row of m.rows){const r=state.squad.find(r=>r.id===row.id);r.battle=maintenanceFinal(row);}
-  for(const r of deployedRigs()){const b=r.battle;b.shutDown=false;b.actions=0;b.actionHistory=[];b.activationConditions=null;b.skipActivation=!!b.skipNext;b.activated=!!b.skipNext;b.skipNext=false;}
+  for(const r of deployedRigs()){const b=r.battle;b.shutDown=false;b.actions=0;delete b.autoActivationBefore;b.actionHistory=[];b.activationConditions=null;b.skipActivation=!!b.skipNext;b.activated=!!b.skipNext;b.skipNext=false;}
   state.engagementEnded=ended;if(!ended)state.round++;state.maintenance=null;recordBattle(before);render();notify(ended?'Engagement complete. Finish the game or open Aftermath.':'Maintenance applied. Next round started.');
  }
 }

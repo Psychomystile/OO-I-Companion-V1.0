@@ -1,3 +1,6 @@
+v0.28.24 — Automatic activation at the action limit
+A Rig is marked Activated automatically after spending its available Actions (normally five; three while Stalled). Maximum-Heat action checks resolve before automatic completion. The existing activation control still ends an activation early. Decreasing the action counter reopens an automatically completed activation; explicit manual completion stays manual. End-of-activation effects use the same path as the manual button, and battle Undo includes the automatic change. Applied in Quick Game and campaign.
+
 v0.28.23 — Squad class order and concise PDFs
 Squad entries show chassis name, weight class and Ironclad grade. Builder lists, deployed Rig cards, Game Setup and PDF sheets use stable Light / Medium / Heavy / Colossal order. Class order is always primary in the hangar too; purchase-order options sort oldest/newest only within each class. Acquisition data stays intact. Under the PDF control terminal, only Equipment names and complete descriptions are printed. Weapon profiles and Armour saves remain in the terminal; the repeated battle, component and weapon summaries are removed.
 
