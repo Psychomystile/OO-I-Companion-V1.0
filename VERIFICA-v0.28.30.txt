@@ -1,0 +1,50 @@
+VERIFICA v0.28.30 — VARIETÀ DELLE ARMI SU TUTTI I RIG
+
+Il controllo ha trovato una ripetizione reale nella v0.28.29: alcune posizioni
+Medium, Heavy e Colossal avevano sempre due armi identiche. La rotazione
+precedente privilegiava le armi dei Light.
+
+Posizioni con sole armi gemelle nel catalogo precedente -> catalogo nuovo:
+Light: 0 -> 0
+Medium: 679 -> 0
+Heavy: 2.854 -> 0
+Colossal: 483 -> 0
+Una posizione è un Rig in una specifica combinazione di formazione, stile e
+setup: lo stesso modello ricorre in più combinazioni.
+
+CORREZIONI
+- Aggiunte 39,938 proposte, preservando tutte le 176,938 precedenti.
+- Ogni posizione e ogni modello ha almeno due coppie reali di armi e una
+  configurazione con armi diverse sulle due braccia.
+- La rotazione dà priorità a turno a ogni Rig; cambiare solo equipaggiamento,
+  Ironclad, un altro Rig o l'arma Hull non nasconde più le braccia immutate.
+- Modelli Nomad controllati singolarmente e per posizione.
+- Armamenti dell'intera squadra diversi fra proposte consecutive, quando
+  il catalogo offre un'alternativa. Le combinazioni finite possono tornare.
+- Le doppie armi restano legali e disponibili quando utili; non sono vietate.
+
+VERIFICHE ESEGUITE
+216,876 proposte del catalogo, 1,012,450 configurazioni di Rig.
+19,680 combinazioni di setup, 92,880 posizioni controllate.
+944,640 rigenerazioni: 48 per combinazione, con tutti i 24 modelli.
+Nessuna posizione bloccata sulla stessa coppia o su sole armi gemelle.
+Alternative da tiro dei Light mantenute; ogni Light Firepower resta armato da tiro.
+368,640 rigenerazioni aggiuntive sui Nomad: 7,680 sequenze,
+16 seed diversi per combinazione, verificando ogni modello in ogni posizione.
+43 percorsi funzionali nel browser e 8 larghezze (320–1440 px).
+432 rigenerazioni reali nell'interfaccia: tutti i 24 modelli, Quick Game e campagna.
+Verificati chiusura/riapertura, salvataggi, backup, PDF, attivazione,
+Maintenance, avvio campagna, gestione degli errori e apertura locale.
+Nessun errore JavaScript rilevato. Test con viewport emulate, non dispositivi fisici.
+
+Tutte le proposte sono passate nei validatori dell'app e in controlli
+indipendenti su fazione, armi comuni compatibili, slot, formazione, Iron,
+piloti e ruoli della missione. Formule dei dadi e benchmark non modificati.
+Il test misura legalità, coerenza dichiarata e varietà: non è una simulazione
+completa di battaglie e non garantisce vittorie.
+
+SALVATAGGI E INTERFACCIA
+Saves, campagne, immagini, intro, motore di gioco e grafica invariati.
+La squadra cambia soltanto accettando una proposta; rimane il backup precedente.
+Nel generatore restano Formation e Style; posizione del pulsante invariata.
+Engagement e terreno si scelgono in Game setup e non vengono sovrascritti.

@@ -1,0 +1,20 @@
+VERIFICA v0.28.29 — POSIZIONE GENERATE ROSTER
+
+Generate roster si trova immediatamente sotto il riepilogo Quick game squadron
+(o Campaign squadron), prima della scelta dei Rig della fazione.
+Compare una sola volta, nella stessa posizione relativa su ogni risoluzione.
+Il generatore mostra soltanto Formation e Style. Engagement, ruolo e densità
+del terreno rimangono in Game setup e non vengono sovrascritti generando.
+
+Verifiche nel browser Chromium:
+43 percorsi funzionali, Quick Game e campagna. Nessun errore JavaScript.
+Posizione dopo il riepilogo e prima dei Rig verificata in entrambi i modi.
+8 larghezze: 320, 359, 393, 600, 768, 820, 1024 e 1440 px, incluse la posizione
+del pulsante in campagna e la finestra di generazione in Quick Game.
+Verificati generazione/applicazione, integrità setup, backup, salvataggi,
+PDF, attivazione automatica, Maintenance, avvio campagna e apertura locale.
+Test con viewport emulate, non dispositivi fisici.
+
+Il motore di generazione, il catalogo v0.28.27, la rotazione delle armi dei Light,
+le immagini, l'intro, lo stile e il formato dei salvataggi sono invariati.
+In app.js sono state modificate soltanto le due righe di posizione del generatore.

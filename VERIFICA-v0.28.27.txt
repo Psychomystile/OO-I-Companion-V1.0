@@ -1,0 +1,32 @@
+VERIFICA v0.28.27 — ARMI DEI LIGHT
+
+Problema riprodotto nella v0.28.26: il ruolo di assalto poteva restare legato
+alla prima posizione Light; la scelta fra poche proposte cambiava spesso
+altri dettagli mantenendo le stesse armi su quel Rig.
+
+Correzione:
+- ampliato il catalogo con alternative da tiro e miste selezionate nel proprio
+  tipo di armamento, mantenendo missione, fazione e limiti;
+- ruoli e interi carichi dei Light non restano legati a una posizione fissa;
+- la rotazione considera le armi effettive, non soltanto il seed della proposta;
+- memoria della rotazione mantenuta anche chiudendo e riaprendo il generatore
+  nella stessa sessione;
+- lo stile Firepower include almeno un'arma da tiro su ogni Light;
+- Close combat conserva l'enfasi sulla mischia, con alternative miste.
+
+Verifiche eseguite:
+176.938 proposte, 822.817 configurazioni di Rig, 19.680 combinazioni di setup.
+Controllate tutte le proposte con i validatori dell'app e controlli indipendenti
+su proprietà delle armi, slot, fazione, formazione, Iron, piloti e ruoli di missione.
+14.880 combinazioni con Light, 48 selezioni ciascuna: 714.240 rigenerazioni.
+Ogni posizione Light ha mostrato almeno due coppie reali di armi e una scelta
+da tiro; nessuna proposta identica ripetuta consecutivamente.
+35 percorsi funzionali nel browser, 8 larghezze fra 320 e 1440 px.
+264 rigenerazioni nell'interfaccia su 11 casi mirati, Quick Game e campagna.
+Verificati: salvataggi, backup, PDF, 5 azioni/attivazione, Maintenance, campagna,
+errori di caricamento/salvataggio e apertura locale. Nessun errore JavaScript.
+
+Limiti: queste verifiche dimostrano il rispetto dei vincoli e la varietà del
+catalogo; non simulano tutte le partite e non garantiscono vittorie. In campagna,
+con 15 Iron, non tutti i Light possono sempre avere due armi da tiro insieme.
+Test browser con risoluzioni emulate, non su dispositivi fisici.

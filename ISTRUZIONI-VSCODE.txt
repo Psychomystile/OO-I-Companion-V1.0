@@ -1,11 +1,22 @@
-AGGIORNAMENTO v0.28.26
+AGGIORNAMENTO v0.28.31 — GENERATORE DINAMICO
 
-1. Estrai lo ZIP e copia TUTTO il contenuto della cartella nel progetto.
-2. Includi roster-generator.js, roster-generator.css e la cartella roster-data.
-3. In VS Code salva, Commit e Sync come negli aggiornamenti precedenti.
-4. Attendi il deploy su Netlify e riapri l’app. In alto deve comparire v0.28.26.
+1. Estrai lo ZIP e copia TUTTO il suo contenuto nel progetto dell’app.
+2. Includi il nuovo roster-engine.js insieme a roster-generator.js e agli
+   altri file. Le immagini e la sequenza iniziale sono tutte comprese.
+3. In VS Code salva, fai Commit e Sync come negli aggiornamenti precedenti.
+4. Dopo il consueto deploy, riapri l’app: in alto deve comparire v0.28.31.
 
-Non cancellare i dati del browser: squadre e campagne restano compatibili.
-Il generatore compare dopo aver scelto la fazione, nella creazione della squadra.
-Una campagna già avviata si continua dall’hangar; il generatore non la sovrascrive.
-Per aprire la copia locale, mantieni insieme tutti i file e apri index.html.
+La vecchia cartella roster-data non viene più caricata dal generatore.
+Può restare nel progetto oppure essere rimossa. Non cancellare i dati del
+browser: le squadre e le campagne esistenti restano compatibili.
+
+Generate roster compare dopo la scelta della fazione, sotto il riepilogo
+Quick game / Campaign squadron e prima della selezione dei Rig. Scegli
+Formation e Style, poi Generate proposal. Controlla la proposta e premi
+Use this squadron solo se vuoi applicarla. I Rig restano modificabili.
+Engagement, lato e terreno si impostano in Game setup e non vengono cambiati.
+Una campagna già avviata continua dall’hangar e non viene sovrascritta.
+
+Per aprire la copia locale, tieni insieme tutti i file e apri index.html
+nel browser. Il generatore funziona anche senza un server locale.
+Non viene pubblicato alcun aggiornamento da questa conversazione.

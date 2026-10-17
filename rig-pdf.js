@@ -14,7 +14,7 @@ async function buildRigPDF(rigs){
   page.drawText(t,{x,y:842-top-size,size,font:f,color:rgb(.08,.09,.09)});
  };
  const rect=(x,top,w,h,fill=false)=>page.drawRectangle({x,y:842-top-h,width:w,height:h,borderWidth:.6,borderColor:rgb(.2,.2,.2),...(fill?{color:rgb(.25,.25,.25)}:{})});
- const newPage=(title)=>{page=doc.addPage([595,842]);y=56;const titleLines=lines(title,11,530);titleLines.slice(0,2).forEach((line,i)=>text(line,32,20+i*17,11,true));text('Of Oil and Iron - Unofficial Companion v0.28.26',32,816,8);};
+ const newPage=(title)=>{page=doc.addPage([595,842]);y=56;const titleLines=lines(title,11,530);titleLines.slice(0,2).forEach((line,i)=>text(line,32,20+i*17,11,true));text('Of Oil and Iron - Unofficial Companion v0.28.31',32,816,8);};
  const lines=(v,size=10,width=520)=>{
   const words=clean(v).split(/\s+/),out=[];let line='';
   for(let word of words){

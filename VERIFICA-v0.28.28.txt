@@ -1,0 +1,20 @@
+VERIFICA v0.28.28 — GENERATORE SEMPLIFICATO
+
+Il generatore mostra soltanto Formation e Style. Le scelte di Engagement,
+ruolo attaccante/difensore e Terrain density restano in Game setup.
+Generare o accettare una proposta non sovrascrive quelle impostazioni.
+Le proposte tattiche utilizzano il setup corrente. Il catalogo verificato
+v0.28.27 e la rotazione degli armamenti dei Light rimangono identici.
+
+Verifiche eseguite nel browser Chromium:
+- 35 percorsi funzionali, in Quick Game e campagna;
+- generazione e applicazione con solo i due selettori previsti;
+- mantenimento esatto delle impostazioni partita dopo la generazione;
+- preset di missione, ruolo e densità usati correttamente dal setup corrente;
+- caricamento/salvataggio, backup, PDF, attivazione a 5 azioni, Maintenance;
+- avvio campagna, gestione degli errori e apertura della copia locale;
+- 8 larghezze: 320, 359, 393, 600, 768, 820, 1024 e 1440 px.
+Nessun errore JavaScript rilevato. Test con viewport emulate, non dispositivi fisici.
+
+App.js, catalogo roster-data, immagini, intro, stile e formato dei salvataggi
+sono identici alla v0.28.27.
