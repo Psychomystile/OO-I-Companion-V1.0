@@ -1,0 +1,44 @@
+VERIFICA v0.28.34 — LETTORE COMPATTO IN SOLA LETTURA
+
+- Assenti nel DOM la fascia con frecce/selettore, la barra del passaggio,
+  il quadrato giallo e i comandi di download del regolamento.
+- Nessun download e nessuna richiesta di file PDF durante le prove del lettore.
+- Tutte le 121 immagini del manuale caricate nel browser. Numerazione,
+  riferimenti interni, indice, ricerca completa e Back verificati.
+- Tutti i 24 riferimenti dei profili Rig raggiungono la pagina corretta.
+- 173 profili arma (di fazione e comuni) risolti nella riga completa dei dati;
+  36 equipaggiamenti inquadrano anche effetto e costo. Provati 7 argomenti,
+  inclusi condizioni, distruzione, tabella Heat, formazioni e inizio campagna.
+- Verificati clic reali su Igniter e Rig Destruction: inquadrano i dati arma
+  e i paragrafi della regola, non il titolo del Rig o la sola intestazione.
+- Collegamenti: zoom e posizionamento verificati senza cornici gialle su
+  320, 359, 393, 600, 768, 820, 1024 e 1440 CSS px.
+- Contents / Search si sovrappone alla pagina senza ridimensionarla.
+  Clic esterno chiude solo l’elenco, anche quando cade fuori dal lettore.
+- Verificati tocco esterno reale emulato, assenza di clic sullo sfondo e
+  assenza di attivazione involontaria del tutto schermo dopo la chiusura.
+- X a tutto schermo riporta alla finestra flottante, conservando pagina,
+  zoom e scorrimento. Una seconda X chiude la finestra. Stato partita intatto.
+- Selezione dal risultato di ricerca chiude l’indice; Escape chiude prima
+  l’elenco aperto. Il doppio tocco e il doppio clic restano disponibili.
+- Pinch in/out: zoom della sola pagina, scala del browser e finestra invariate.
+- Swipe orizzontale con input touch a zoom 100% cambia realmente pagina.
+- Vecchio ingresso PDF ora apre il lettore alla pagina richiesta senza download.
+- Verificato anche da file:// senza server. X accessibile nelle viste corte e
+  landscape del controllo generale del lettore.
+
+REGRESSIONE APP
+- 43 percorsi/proposte e 16 controlli UI del generatore: fazioni, stili,
+  formazioni, budget, ruoli, anteprima, backup e salvataggi.
+- Controllati avvio Quick game, impostazioni, attivazione a 5 azioni,
+  Maintenance, avanzamento round, fine partita e PDF delle schede Rig.
+- 10 controlli campagna: creazione, Game setup, intro/Start Engine,
+  re-roll, Aftermath, Salvage aggiuntivo, persistenza danni e XP, riparazioni,
+  rottamazione, inventario, trasferimento Ironclad, Iron Market e undo.
+- Esportazione/importazione backup e ricarica con progressi conservati.
+- Sintassi JavaScript, risorse iniziali e integrità ZIP controllate.
+- Nessun errore JavaScript nei percorsi conclusi. Motore, regole, generatori,
+  immagini e formato salvataggi conservati rispetto alla v0.28.33.
+
+Prove con Chromium 153, viewport e input touch emulati. Non sono prove fisiche
+su ogni dispositivo o su Safari. Nessun deploy eseguito.

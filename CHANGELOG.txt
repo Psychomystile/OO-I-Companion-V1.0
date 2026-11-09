@@ -1,3 +1,21 @@
+v0.28.34 — COMPACT READ-ONLY RULEBOOK
+
+Removed the page-picker/arrow strip, passage-label banner and manual PDF
+download. The whole 121-page rulebook remains available in the local reader.
+References zoom and position the requested content without a yellow frame.
+Weapon links retain numeric rows; Equipment includes effects/costs; standalone
+headings resolve to their body paragraphs. Wide rows keep the item name visible
+at readable zoom on phones. Exact names outrank partial weapon-name matches.
+Contents / Search floats over the page and dismisses on outside click/tap;
+that gesture does not close the book or activate underlying controls.
+The full-screen X restores the floating reader at the same page, zoom and
+scroll. Only the floating reader X closes the book. Pinch, double-tap,
+horizontal swipe at fit width, keyboard page turning, search and Back remain.
+Legacy PDF entry links now open the same read-only viewer. Removed the
+unneeded PDF download loader and encoded PDF payload from the app package.
+Game logic, save format, generator and original images remain unchanged.
+See VERIFICA-v0.28.34.txt for browser and gameplay regression checks.
+
 v0.28.33 — RULEBOOK VIEW, GESTURES AND PDF DOWNLOAD
 
 Page dropdown and current-page header show page labels only; descriptions

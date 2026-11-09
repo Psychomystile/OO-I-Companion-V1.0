@@ -1,24 +1,28 @@
-AGGIORNAMENTO COMPLETO v0.28.33
+AGGIORNAMENTO COMPLETO v0.28.34
 
 1. Estrai lo ZIP e copia TUTTO il contenuto nel progetto dell’app.
-2. Includi rulebook/ con pages/ e pdf-data/, i file rulebook*.js/.css/.html,
-   _redirects e tutti gli altri file aggiornati.
-   Se è rimasto il vecchio rulebook/of-oil-and-iron-rulebook-v1.pdf della
-   v0.28.32, eliminalo: ora è sostituito dai piccoli file in pdf-data/.
-3. Salva in VS Code, fai Commit e Sync come negli aggiornamenti precedenti.
-4. Dopo il consueto deploy, riapri l’app e controlla la scritta v0.28.33.
+2. Includi rulebook/pages/, rulebook/rulebook-data.js, rulebook.js,
+   rulebook.css, index.html, rulebook-pdf.html, _redirects e gli altri file.
+3. Se aggiorni la cartella precedente, elimina i vecchi file non più usati:
+   rulebook/pdf-data/ (tutta la cartella), rulebook-pdf.js,
+   rulebook-pdf-page.js, tools/prepare-rulebook-pdf.py,
+   tools/rulebook-pdf-check.json e gli eventuali PDF in rulebook/.
+   Mantieni rulebook/pages/ e vendor/: servono al lettore e alle schede Rig.
+4. Salva, fai Commit e Sync come negli aggiornamenti precedenti.
+5. Dopo il consueto deploy controlla che l’app mostri v0.28.34.
 
 Nel regolamento:
-- Selettore pagine con il solo numero; indice in Contents / Search.
-- Doppio clic o doppio tocco sulla pagina: schermo intero; ripeti per tornare.
-- Due dita per ingrandire/ridurre solo la pagina, senza ingrandire la finestra.
-- Un dito per spostare la pagina ingrandita; zoom disponibile dal 50 al 400%.
-- X sempre visibile in alto a destra. Nella vista flottante chiude anche un
-  clic/tocco esterno. Escape torna alla finestra e poi chiude.
-- Download PDF scarica tutte le 121 pagine. Se il browser richiede un secondo
-  tocco, premi di nuovo lo stesso pulsante quando il download è pronto.
+- Rimossa la fascia con frecce/selettore pagina e la barra del passaggio citato.
+- Solo lettura; rimosso il download del manuale.
+- Contents / Search: tocca o clicca fuori dall’elenco per nascondere l’elenco.
+- X a tutto schermo: torna alla finestra flottante sulla stessa pagina.
+  X nella finestra flottante: chiude il regolamento.
+- Collegamenti: inquadrano profilo dell’arma, effetto dell’equipaggiamento o
+  testo della regola, senza fermarsi sul titolo e senza quadrato giallo.
+- Pinch con due dita sulla pagina; un dito per spostarla quando è ingrandita.
+- A zoom 100%, scorri lateralmente per cambiare pagina; da tastiera usa le
+  frecce sinistra/destra. Sono disponibili indice, ricerca e Back.
 
-Il PDF scaricabile è alleggerito nelle immagini; testo e pagine sono completi.
-Le immagini ad alta risoluzione del lettore restano quelle della v0.28.32.
-Squadre e campagne restano compatibili: mantieni indirizzo e dati del browser.
-Per la copia locale mantieni insieme tutti i file e apri index.html.
+La partita e le campagne restano compatibili. Mantieni indirizzo e dati del
+browser per conservare i salvataggi. Per una prova locale apri index.html,
+lasciando insieme tutti i file e le cartelle dello ZIP.
