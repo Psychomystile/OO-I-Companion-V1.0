@@ -1,5 +1,5 @@
 from pathlib import Path
-import concurrent.futures, fitz, json, re, hashlib, shutil, io, argparse
+import concurrent.futures, fitz, json, re, hashlib, io, argparse
 from PIL import Image
 
 parser=argparse.ArgumentParser(description='Render the complete supplied Rulebook V1 for the local app reader.')
@@ -49,7 +49,6 @@ def asset(index):
 
 if __name__=='__main__':
  (DEST/'pages').mkdir(parents=True,exist_ok=True)
- if SOURCE!=(DEST/'of-oil-and-iron-rulebook-v1.pdf').resolve(): shutil.copyfile(SOURCE,DEST/'of-oil-and-iron-rulebook-v1.pdf')
  with concurrent.futures.ProcessPoolExecutor(max_workers=4) as pool:
   pages=[]
   for page in pool.map(asset,range(121)):
@@ -57,7 +56,7 @@ if __name__=='__main__':
    if len(pages)%20==0:print('Prepared',len(pages),'of 121 pages',flush=True)
  labels={86: 'Equipment Table B', 87: 'Equipment Table C', 90: 'Iron Costs and Equipment', 91: 'The Battlefield', 92: 'Battlefield and Objectives', 94: 'Deployments 7–12', 102: 'Winning the Campaign and Fielding Your Squadron', 104: 'Ironclad Experience and Aftermath', 105: 'Rig Recovery and Permanent Damage', 106: 'Salvage and Reinforcement', 107: 'Iron Market and Recruiting', 108: 'Scrapping and Mercenaries', 109: 'Squadron Reference Charts', 110: 'Squadron Reference Charts', 112: 'Quick Reference · Heat and Damage', 114: 'Rules Glossary (continued)', 115: 'Rules Glossary (continued)'}
  for number,title in labels.items():pages[number+2]['title']=title
- data={'schema':1,'version':'0.28.32','source':'Of Oil and Iron Rulebook V1 (user supplied)','sourceSHA256':hashlib.sha256(SOURCE.read_bytes()).hexdigest(),'pageCount':len(pages),'numberedPageMax':115,'toc':[{'title':'Cover','index':1},*({'title':t,'index':p+3} for t,p in TOC)],'pages':pages}
+ data={'schema':1,'version':'0.28.33','source':'Of Oil and Iron Rulebook V1 (user supplied)','sourceSHA256':hashlib.sha256(SOURCE.read_bytes()).hexdigest(),'pageCount':len(pages),'numberedPageMax':115,'toc':[{'title':'Cover','index':1},*({'title':t,'index':p+3} for t,p in TOC)],'pages':pages}
  (DEST/'rulebook-data.js').write_text('/* Complete user-supplied Rulebook V1 page index. */\nglobalThis.OOIRulebookData='+json.dumps(data,ensure_ascii=False,separators=(',',':'))+';\n')
  (ROOT/'tools/rulebook-asset-check.json').write_text(json.dumps({'sourceSHA256':data['sourceSHA256'],'pages':len(pages),'internalLinks':sum(len(p['refs']) for p in pages),'webpBytes':sum(p.stat().st_size for p in (DEST/'pages').glob('*.webp'))},indent=2))
  print('Complete:',len(pages),'pages.',flush=True)

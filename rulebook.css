@@ -2,3 +2,19 @@
 
 /* Keep the close control clear of notches and standalone-app status bars. */
 .rulebook-dialog{inset:calc(env(safe-area-inset-top,0px) + 16px) calc(env(safe-area-inset-right,0px) + 16px) calc(env(safe-area-inset-bottom,0px) + 16px) calc(env(safe-area-inset-left,0px) + 16px);width:min(1160px,calc(100vw - 32px - env(safe-area-inset-left,0px) - env(safe-area-inset-right,0px)));height:min(980px,calc(100dvh - 32px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px)));max-width:calc(100vw - 32px - env(safe-area-inset-left,0px) - env(safe-area-inset-right,0px));max-height:calc(100dvh - 32px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px))}@media(max-width:760px){.rulebook-dialog{inset:calc(env(safe-area-inset-top,0px) + 12px) calc(env(safe-area-inset-right,0px) + 10px) calc(env(safe-area-inset-bottom,0px) + 12px) calc(env(safe-area-inset-left,0px) + 10px);width:calc(100vw - 20px - env(safe-area-inset-left,0px) - env(safe-area-inset-right,0px));height:calc(100dvh - 24px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));max-width:calc(100vw - 20px - env(safe-area-inset-left,0px) - env(safe-area-inset-right,0px));max-height:calc(100dvh - 24px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px))}}
+
+/* The close control is outside hidden reading chrome, so it remains available. */
+.rulebook-dialog{position:fixed}.rulebook-dialog .rb-header{padding-right:70px}.rulebook-dialog>.rb-close{position:absolute;right:12px;top:12px;z-index:20}
+.rulebook-dialog.rb-fullscreen{inset:0;width:100vw;height:100vh;height:100dvh;max-width:none;max-height:none;margin:0;border:0;border-radius:0;grid-template-rows:minmax(0,1fr);box-shadow:none}
+.rb-fullscreen>.rb-header,.rb-fullscreen>.rb-toolbar,.rb-fullscreen>.rb-footer,.rb-fullscreen .rb-context,.rb-fullscreen .rb-sidebar{display:none!important}
+.rb-fullscreen>.rb-layout{grid-row:1;display:block;height:100%;min-height:0}.rb-fullscreen .rb-reading{height:100%}.rb-fullscreen .rb-viewport{padding:0;scrollbar-gutter:auto}.rb-fullscreen .rb-paper{box-shadow:none}
+.rulebook-dialog.rb-fullscreen>.rb-close{position:fixed;top:calc(env(safe-area-inset-top,0px) + 10px);right:calc(env(safe-area-inset-right,0px) + 10px);z-index:30;background:#101615ed;border-color:#d4a246;box-shadow:0 2px 12px #0008}
+@media(max-width:760px){.rulebook-dialog>.rb-close{top:9px;right:10px}.rulebook-dialog .rb-header{padding-right:66px}}
+/* Pinch gestures resize only the book page; the dialog and app never scale. */
+.rulebook-dialog .rb-viewport,.rulebook-dialog .rb-viewport.rb-zoomed{touch-action:pan-x pan-y}
+
+.rb-original{min-width:112px;justify-content:center}.rb-original[aria-busy="true"]{cursor:progress;opacity:.8}
+
+/* A zoomed page must overflow its scroller, never expand the dialog grid. */
+.rulebook-dialog[open]{grid-template-columns:minmax(0,1fr)}
+.rulebook-dialog .rb-layout{min-width:0}

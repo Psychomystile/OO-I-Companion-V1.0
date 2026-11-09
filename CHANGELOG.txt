@@ -1,3 +1,32 @@
+v0.28.33 — RULEBOOK VIEW, GESTURES AND PDF DOWNLOAD
+
+Page dropdown and current-page header show page labels only; descriptions
+remain in Contents / Search. Double-click / double-tap enters full-screen
+reading and restores the floating view, zoom and scroll on repetition. The
+close X stays top-right, including safe-area insets. Escape restores first.
+Two-finger pinch changes page zoom only (50–400%), with one-finger panning.
+The zoomed page cannot expand the full-screen grid or hide touch targets.
+
+The broken large-file PDF link is replaced by an on-demand complete PDF
+download assembled from small static assets, with a persistent ready link,
+progress, error handling, retry and a standalone fallback page. Downloaded
+PDFs are hash-checked in HTTP, repeated, retry and local-file browser tests.
+Its large images are recompressed; all 121 pages retain identical extracted
+text. Reader images are unchanged. Legacy PDF URLs have Netlify redirects.
+
+General regression includes builder/generator, saves, Quick game, activation,
+Maintenance, Rig PDF, campaign intro, Aftermath, repairs, scrapping, inventory,
+Ironclad transfer, market, undo, backup export/import and reload.
+Game logic, generator engine and save format remain unchanged from v0.28.32.
+See VERIFICA-v0.28.33.txt for tested devices/sizes and limits.
+
+v0.28.32 — COMPLETE LOCAL RULEBOOK
+
+Added all 121 pages, full-text search, Contents and clickable in-app and
+internal manual references. Exact passage highlighting, deployment and terrain
+contexts, floating close/outside-touch handling and local-file support.
+Historical details are retained in VERIFICA-v0.28.32.txt.
+
 v0.28.31 — DYNAMIC GENERATOR
 
 OF OIL & IRON COMPANION — v0.28.31

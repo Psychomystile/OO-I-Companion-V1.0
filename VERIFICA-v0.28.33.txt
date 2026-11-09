@@ -1,0 +1,59 @@
+VERIFICA v0.28.33 — LETTORE, GESTI E CONTROLLO GENERALE
+
+REGOLAMENTO
+- Tutte le 121 pagine caricate nel browser e tutti i 24 riferimenti dei profili
+  Rig verificati. Ricerca, indice, citazioni, evidenziazione e Back funzionanti.
+- Selettore e intestazione mostrano solo la pagina; i titoli restano nell’indice.
+- Doppio clic e doppio tocco aprono e chiudono la lettura a schermo intero.
+  Il ritorno ripristina lo zoom e la posizione della finestra flottante.
+- X sempre visibile in alto a destra, anche scorrendo, dopo pinch e in landscape.
+- Pinch con due dita: zoom della sola pagina, in entrambe le direzioni.
+  Scala del browser, dimensioni della finestra e X verificate come invariate.
+- Scorrimento con un dito della pagina ingrandita verificato con input touch.
+- Corretto il layout a schermo intero: il foglio ingrandito resta nel suo
+  scroller e non allarga il contenitore né rende irraggiungibili i comandi.
+- Chiusura con X, Escape, clic e tocco esterno; nessun comando della partita
+  attivato per errore dal clic successivo a un tocco esterno.
+- Riferimenti a Deployment 6 e alla riga del terreno selezionato verificati.
+- Larghezze provate: 320, 359, 393, 600, 768, 820, 1024 e 1440 CSS px.
+  Provate anche finestre corte, landscape e rotazione durante il pinch.
+
+PDF DEL REGOLAMENTO
+- Download effettivo da HTTP, ripetuto, file:// e pagina di download separata.
+- Simulato un file mancante: messaggio di errore e nuovo tentativo riuscito.
+- I PDF scaricati hanno lunghezza e SHA-256 identici al manifest, non sono
+  pagine HTML rinominate e comprendono tutte le 121 pagine.
+- Copia scaricabile di 19.822.110 byte: immagini ricompresse, testo estratto di
+  ogni pagina identico all’originale. Ordine e numero delle pagine conservati.
+- Controllo visivo interno di pagine rappresentative, inclusi schieramenti e
+  tabella dei terreni. Le 121 immagini del lettore non sono state modificate.
+- Dati PDF serviti in 7 piccoli file statici e caricati solo su richiesta.
+  Nessun singolo asset PDF da circa 104 MB da trasferire all’apertura.
+
+APP GENERALE
+- 43 percorsi/proposte provati nel controllo UI del generatore e 16 controlli
+  funzionali: menu, scelta fazione, stili, formazioni, armi, vincoli di Iron,
+  campagne iniziali e Nomadi, ruoli, anteprima e sostituzione con backup.
+- Salvataggio, caricamento e ricarica; impostazioni di Game setup conservate;
+  gestione errori di spazio disponibile e annullamento generazione verificati.
+- Attivazione automatica a 5 azioni, Maintenance, avanzamento round,
+  fine Quick game con ripristino e download effettivo del PDF dei Rig.
+- Campagna: creazione → Game setup → intro/Start Engine → partita.
+- Flag dei re-roll, Aftermath, Salvage automatico per roster inferiore,
+  risultato stabile dopo ricarica, XP e danni permanenti verificati.
+- Ricompense applicate una volta; riparazioni con i primi SP gratuiti.
+- Rottamazione, restituzione di armi/equipaggiamento/pilota all’inventario,
+  annullamento dell’operazione e trasferimento del pilota su un altro Rig.
+- Conservazione di XP e re-roll; deposito e vendita armi; acquisto chassis
+  di fazione al costo corretto con Rookie e credito armi iniziale.
+- Esportazione e importazione reali del backup JSON, nuova workspace e ricarica
+  senza perdita dei progressi della campagna verificati.
+- app.js, motore e UI del generatore, stile dell’app, intro, lore, immagini
+  originali e formato di salvataggio restano quelli della v0.28.32.
+- Sintassi JavaScript/Python, risorse iniziali e integrità dell’archivio controllate.
+- Nessun errore JavaScript nei percorsi conclusi.
+
+Le prove sono state eseguite con Chromium 153, viewport e input touch emulati.
+Non sostituiscono una prova fisica di ogni telefono o browser Safari e non
+costituiscono una simulazione di tutte le possibili partite. Non è stato
+eseguito alcun deploy. Le regole e la matematica del generatore non cambiano.

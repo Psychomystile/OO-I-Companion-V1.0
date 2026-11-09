@@ -1,10 +1,13 @@
 {
-  "version": "0.28.32",
+  "version": "0.28.33",
   "sourceSHA256": "e80b13288a4b48cf7fa7396879d1351f402b6192b1d6f7d998a2566fe526066e",
   "pages": 121,
   "imageWidth": 2000,
   "webpBytes": 48833250,
-  "pdfBytes": 103594355,
+  "pdfBytes": 19822110,
   "gameEnginePreserved": true,
-  "originalGraphicsPreserved": true
+  "originalGraphicsPreserved": true,
+  "pdfSHA256": "cc9e2f06c6defd3da3ff98389ff140f75dc1be7b038dbd976c640aa790cdb1e1",
+  "pdfDownloadParts": 7,
+  "readerImagesPreserved": true
 }

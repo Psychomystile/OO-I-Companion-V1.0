@@ -1,21 +1,24 @@
-AGGIORNAMENTO v0.28.32 — RULEBOOK
+AGGIORNAMENTO COMPLETO v0.28.33
 
 1. Estrai lo ZIP e copia TUTTO il contenuto nel progetto dell’app.
-2. Includi tutta la cartella rulebook, rulebook.js, rulebook.css e gli altri file
-   aggiornati. La cartella contiene tutte le pagine e il PDF originale.
+2. Includi rulebook/ con pages/ e pdf-data/, i file rulebook*.js/.css/.html,
+   _redirects e tutti gli altri file aggiornati.
+   Se è rimasto il vecchio rulebook/of-oil-and-iron-rulebook-v1.pdf della
+   v0.28.32, eliminalo: ora è sostituito dai piccoli file in pdf-data/.
 3. Salva in VS Code, fai Commit e Sync come negli aggiornamenti precedenti.
-4. Dopo il consueto deploy, riapri l’app: deve comparire v0.28.32.
+4. Dopo il consueto deploy, riapri l’app e controlla la scritta v0.28.33.
 
-Nel menu principale premi Rulebook. Per consultare una regola citata nell’app,
-clicca o tocca il riferimento alla pagina. Il manuale si apre solo su richiesta.
-Chiudi con la X sempre visibile oppure toccando/cliccando fuori dalla finestra.
-Tornerai alla schermata e alla posizione in cui eri.
+Nel regolamento:
+- Selettore pagine con il solo numero; indice in Contents / Search.
+- Doppio clic o doppio tocco sulla pagina: schermo intero; ripeti per tornare.
+- Due dita per ingrandire/ridurre solo la pagina, senza ingrandire la finestra.
+- Un dito per spostare la pagina ingrandita; zoom disponibile dal 50 al 400%.
+- X sempre visibile in alto a destra. Nella vista flottante chiude anche un
+  clic/tocco esterno. Escape torna alla finestra e poi chiude.
+- Download PDF scarica tutte le 121 pagine. Se il browser richiede un secondo
+  tocco, premi di nuovo lo stesso pulsante quando il download è pronto.
 
-Il lettore include indice, ricerca, cambio pagina e zoom. I numeri seguono quelli
-stampati nel manuale. Original PDF apre il file allegato completo e invariato.
-L’archivio è più grande perché comprende tutto il regolamento.
-
-Non cancellare i dati del browser: squadre e campagne restano compatibili.
-Per aprire la copia locale, mantieni insieme tutti i file e apri index.html.
-Il generatore dinamico rimane disponibile, con tutti i vincoli di fazione,
-formazione, armi, Iron e campagna già introdotti nella v0.28.31.
+Il PDF scaricabile è alleggerito nelle immagini; testo e pagine sono completi.
+Le immagini ad alta risoluzione del lettore restano quelle della v0.28.32.
+Squadre e campagne restano compatibili: mantieni indirizzo e dati del browser.
+Per la copia locale mantieni insieme tutti i file e apri index.html.

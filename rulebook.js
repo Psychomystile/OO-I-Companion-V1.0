@@ -1,15 +1,15 @@
-/* Of Oil & Iron v0.28.32 — complete local rulebook and contextual references. */
+/* Of Oil & Iron v0.28.33 — focused reading, reversible full screen and PDF download. */
 (() => {
  'use strict';
- const API=globalThis.OOIRulebook={version:'0.28.32'};
+ const API=globalThis.OOIRulebook={version:'0.28.33'};
  const DATA=globalThis.OOIRulebookData;
- const PDF='rulebook/of-oil-and-iron-rulebook-v1.pdf';
+ const PDF='rulebook-pdf.html';
  const REF=/\b(?:(?:Rulebook(?:\s+V1)?\s*[,·:]?\s*)(?:pp?\.?|pages?)\s*|(?:pp?\.|pages?\b)\s*|pp?\s+)(\d{1,3})(?:\s*([–—-])\s*(\d{1,3}))?/gi;
  const ignored='script,style,noscript,textarea,input,select,option,button,a,code,pre,svg,math,[contenteditable="true"],.rulebook-dialog';
  const normal=text=>String(text||'').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
  const esc=text=>String(text??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  const stop=new Set(['the','and','for','from','this','that','with','your','rulebook','page','pages','reference','only','quick','game','campaign','components','book','v1']);
- let dialog=null,view=null,paper=null,sidebar=null,current=1,lastIndex=1,zoom=1,focusBox=null,focusLabel='',pageToken=0,returnFocus=null,returnScroll=null,navHistory=[],lastSearch='',resizeObserver=null,backdropClick=null;
+ let dialog=null,view=null,paper=null,sidebar=null,current=1,lastIndex=1,zoom=1,focusBox=null,focusLabel='',pageToken=0,returnFocus=null,returnScroll=null,navHistory=[],lastSearch='',resizeObserver=null,backdropClick=null,fullScreen=false,normalView=null,lastTouchToggle=-Infinity,lastPinchTime=-Infinity;
  const pageAt=index=>DATA?.pages[index-1];
  function pageIndex(number){return DATA?.pages.find(p=>p.number===Number(number))?.index||null;}
  function label(p){return p.number?'p. '+p.number:p.label;}
@@ -79,13 +79,30 @@
  function setSidebar(open){if(!dialog)return;sidebar.hidden=!open;dialog.querySelector('.rb-layout').dataset.sidebar=String(open);dialog.querySelector('[data-rb-action="contents"]').setAttribute('aria-expanded',String(open));requestAnimationFrame(()=>resizePaper(false));}
  function resizePaper(preserve=true){
   if(!dialog||!paper||!view)return;
-  const x=(view.scrollLeft+view.clientWidth/2)/(paper.offsetWidth||1),y=view.scrollTop/(paper.offsetHeight||1);
-  paper.style.width=Math.max(1,Math.floor(Math.min(1000,view.clientWidth-28)*zoom))+'px';
+  const x=(view.scrollLeft+view.clientWidth/2-paper.offsetLeft)/(paper.offsetWidth||1),y=(view.scrollTop+view.clientHeight/2-paper.offsetTop)/(paper.offsetHeight||1);
+  paper.style.width=Math.max(1,Math.floor(Math.min(fullScreen?1400:1000,view.clientWidth-(fullScreen?0:28))*zoom))+'px';
   dialog.querySelector('[data-rb-zoom]').textContent=Math.round(zoom*100)+'%';
-  dialog.querySelector('[data-rb-action="zoom-out"]').disabled=zoom<=1;
+  dialog.querySelector('[data-rb-action="zoom-out"]').disabled=zoom<=.5;
   dialog.querySelector('[data-rb-action="zoom-in"]').disabled=zoom>=4;
   view.classList.toggle('rb-zoomed',zoom>1);
-  if(preserve){view.scrollLeft=x*paper.offsetWidth-view.clientWidth/2;view.scrollTop=y*paper.offsetHeight;}
+  if(preserve){view.scrollLeft=paper.offsetLeft+x*paper.offsetWidth-view.clientWidth/2;view.scrollTop=paper.offsetTop+y*paper.offsetHeight-view.clientHeight/2;}
+ }
+ function toggleFullScreen(force){
+  if(!dialog||!view||!paper)return;
+  const next=typeof force==='boolean'?force:!fullScreen;if(next===fullScreen)return;
+  const previous={index:current,zoom,top:view.scrollTop,left:view.scrollLeft,sidebar:!sidebar.hidden,x:(view.scrollLeft+view.clientWidth/2-paper.offsetLeft)/(paper.offsetWidth||1),y:(view.scrollTop+view.clientHeight/2-paper.offsetTop)/(paper.offsetHeight||1)};
+  if(next){normalView=previous;setSidebar(false);}else if(normalView)zoom=normalView.zoom;
+  fullScreen=next;dialog.classList.toggle('rb-fullscreen',fullScreen);
+  dialog.querySelector('[data-rb-action="fullscreen"]').setAttribute('aria-pressed',String(fullScreen));
+  if(!fullScreen)setSidebar(!!normalView?.sidebar);
+  resizePaper(false);
+  const restore=()=>{
+   if(!dialog||next!==fullScreen)return;resizePaper(false);
+   if(!fullScreen&&normalView?.index===current){view.scrollTop=normalView.top;view.scrollLeft=normalView.left;}
+   else {view.scrollTop=paper.offsetTop+previous.y*paper.offsetHeight-view.clientHeight/2;view.scrollLeft=paper.offsetLeft+previous.x*paper.offsetWidth-view.clientWidth/2;}
+  };
+  restore();requestAnimationFrame(restore);
+  if(fullScreen&&!view.contains(document.activeElement))dialog.querySelector('.rb-close').focus({preventScroll:true});
  }
  function focusPassage(){
   if(!view||!paper)return;
@@ -100,21 +117,31 @@
   focusBox=box||matched?.box||null;focusLabel=query;
   if(autoZoom&&focusBox&&window.innerWidth<650)zoom=focusBox[2]-focusBox[0]<.6?2:1.25;
   const token=++pageToken;
-  dialog.querySelector('[data-rb-title]').textContent=label(p)+' · '+p.title;
+  dialog.querySelector('[data-rb-title]').textContent=label(p);
   dialog.querySelector('[data-rb-page]').value=String(index);
   dialog.querySelector('[data-rb-action="previous"]').disabled=index===1;
   dialog.querySelector('[data-rb-action="next"]').disabled=index===DATA.pageCount;
   dialog.querySelector('[data-rb-action="back"]').disabled=!navHistory.length;
-  dialog.querySelector('[data-rb-pdf]').href=PDF+'#page='+index;
+  if(!dialog.querySelector('[data-rb-pdf]').dataset.pdfReady)dialog.querySelector('[data-rb-pdf]').href=new URL(PDF,document.baseURI).href;
   const hint=dialog.querySelector('[data-rb-context]');hint.hidden=!focusBox;hint.textContent=focusBox?'Highlighted passage'+(query?': '+query:''):'';
   paper.style.aspectRatio=p.width+'/'+p.height;
   paper.innerHTML=`<img class="rb-page-image" alt="Rulebook ${esc(label(p))} · ${esc(p.title)}" width="${p.width}" height="${p.height}" draggable="false"><div class="rb-hotlinks">${p.refs.map(r=>`<a class="rb-page-reference" href="${PDF}#page=${pageIndex(r.page)}" data-rb-internal="${r.page}" aria-label="Open rulebook page ${r.page}" title="Open ${esc(r.label)}" style="left:${r.box[0]*100}%;top:${r.box[1]*100}%;width:${(r.box[2]-r.box[0])*100}%;height:${(r.box[3]-r.box[1])*100}%"></a>`).join('')}</div>${focusBox?`<div class="rb-passage" aria-hidden="true" style="left:${focusBox[0]*100}%;top:${focusBox[1]*100}%;width:${(focusBox[2]-focusBox[0])*100}%;height:${(focusBox[3]-focusBox[1])*100}%"></div>`:''}<div class="rb-page-text">${p.blocks.map(b=>`<p>${esc(b.text)}</p>`).join('')}</div>`;
   const image=paper.querySelector('img'),status=dialog.querySelector('[data-rb-status]');status.textContent='Loading '+label(p)+'…';
   image.onload=()=>{if(!dialog||token!==pageToken)return;status.textContent=label(p)+' · '+index+' / '+DATA.pageCount+' PDF pages';resizePaper(false);focusPassage();};
-  image.onerror=()=>{if(!dialog||token!==pageToken)return;status.textContent='This page image could not load. Use Original PDF, or check the complete app folder.';};
+  image.onerror=()=>{if(!dialog||token!==pageToken)return;status.textContent='This page image could not load. Download the PDF, or check the complete app folder.';};
   image.src='rulebook/pages/'+String(index).padStart(3,'0')+'.webp';
   resizePaper(false);focusPassage();
   if(index<DATA.pageCount){const preload=new Image();preload.src='rulebook/pages/'+String(index+1).padStart(3,'0')+'.webp';}
+ }
+ async function preparePDF(link){
+  if(link.getAttribute('aria-busy')==='true')return;
+  const owner=dialog;link.setAttribute('aria-busy','true');link.textContent='Preparing PDF…';
+  try{
+   const blob=await globalThis.OOIRulebookPDF.getBlob({progress:(loaded,total)=>{if(dialog===owner)owner.querySelector('[data-rb-status]').textContent='Preparing PDF · '+Math.round(loaded/total*100)+'%';}});
+   if(dialog!==owner)return;
+   const url=OOIRulebookPDF.save(blob,owner);link.href=url;link.download='of-oil-and-iron-rulebook-v1.pdf';link.dataset.pdfReady='true';owner.querySelector('[data-rb-status]').textContent='PDF ready. Tap Download PDF again if the download did not start.';
+  }catch(error){if(dialog===owner)owner.querySelector('[data-rb-status]').textContent=error.message;}
+  finally{if(dialog===owner){link.textContent='Download PDF';link.removeAttribute('aria-busy');}}
  }
  function close(){
   if(!dialog)return;
@@ -122,15 +149,15 @@
   if(old.open&&typeof old.close==='function')old.close();old.remove();document.body.classList.remove('rulebook-open');
   if(returnScroll){window.scrollTo({top:returnScroll.top,left:returnScroll.left,behavior:'instant'});}
   if(returnFocus?.isConnected)returnFocus.focus({preventScroll:true});
-  view=paper=sidebar=null;navHistory=[];
+  view=paper=sidebar=null;navHistory=[];fullScreen=false;normalView=null;
  }
  function open({page=null,index=null,query=''}={}){
   if(!DATA){globalThis.alert?.('The rulebook files are missing. Update the complete app folder.');return;}
   const target=index||pageIndex(page)||lastIndex;
   if(dialog){show(target,{query,autoZoom:true});return;}
-  returnFocus=document.activeElement;returnScroll={top:window.scrollY,left:window.scrollX};navHistory=[];current=target;zoom=1;lastSearch='';
+  returnFocus=document.activeElement;returnScroll={top:window.scrollY,left:window.scrollX};navHistory=[];current=target;zoom=1;lastSearch='';fullScreen=false;normalView=null;lastTouchToggle=-Infinity;lastPinchTime=-Infinity;
   dialog=document.createElement('dialog');dialog.className='rulebook-dialog';dialog.setAttribute('aria-labelledby','rulebook-title');
-  dialog.innerHTML=`<header class="rb-header"><div><h2 id="rulebook-title">Rulebook</h2><p data-rb-title></p></div><button type="button" class="rb-close" data-rb-action="close" aria-label="Close rulebook" title="Close rulebook">×</button></header><div class="rb-toolbar"><button type="button" data-rb-action="contents" aria-expanded="false" aria-controls="rulebook-sidebar">Contents / Search</button><div class="rb-pagination"><button type="button" data-rb-action="previous" aria-label="Previous page">‹</button><label><span class="rb-sr">Go to rulebook page</span><select data-rb-page aria-label="Go to rulebook page">${DATA.pages.map(p=>`<option value="${p.index}">${esc(label(p))} · ${esc(p.title)}</option>`).join('')}</select></label><button type="button" data-rb-action="next" aria-label="Next page">›</button></div><div class="rb-zoom"><button type="button" data-rb-action="zoom-out" aria-label="Zoom out">−</button><button type="button" data-rb-action="fit" data-rb-zoom aria-label="Fit page width">100%</button><button type="button" data-rb-action="zoom-in" aria-label="Zoom in">+</button></div><button type="button" data-rb-action="back" disabled>Back</button><a class="rb-original" data-rb-pdf href="${PDF}" target="_blank" rel="noopener">Original PDF ↗</a></div><div class="rb-layout" data-sidebar="false"><aside class="rb-sidebar" id="rulebook-sidebar" hidden><label class="rb-search"><span>Find a rule</span><input type="search" data-rb-search placeholder="Heat, formation, weapon…" autocomplete="off"></label><div data-rb-results></div></aside><div class="rb-reading"><p class="rb-context" data-rb-context hidden></p><div class="rb-viewport" tabindex="0" aria-label="Rulebook page. Use zoom to read details."><article class="rb-paper"></article></div></div></div><footer class="rb-footer"><span data-rb-status role="status" aria-live="polite"></span><span>Of Oil and Iron · Scott Hadley / Scoutsifer Studio</span></footer>`;
+  dialog.innerHTML=`<header class="rb-header"><div><h2 id="rulebook-title">Rulebook</h2><p data-rb-title></p></div></header><button type="button" class="rb-close" data-rb-action="close" aria-label="Close rulebook" title="Close rulebook">×</button><div class="rb-toolbar"><button type="button" data-rb-action="contents" aria-expanded="false" aria-controls="rulebook-sidebar">Contents / Search</button><div class="rb-pagination"><button type="button" data-rb-action="previous" aria-label="Previous page">‹</button><label><span class="rb-sr">Go to rulebook page</span><select data-rb-page aria-label="Go to rulebook page">${DATA.pages.map(p=>`<option value="${p.index}">${esc(label(p))}</option>`).join('')}</select></label><button type="button" data-rb-action="next" aria-label="Next page">›</button></div><div class="rb-zoom"><button type="button" data-rb-action="zoom-out" aria-label="Zoom out">−</button><button type="button" data-rb-action="fit" data-rb-zoom aria-label="Fit page width">100%</button><button type="button" data-rb-action="zoom-in" aria-label="Zoom in">+</button></div><button type="button" data-rb-action="back" disabled>Back</button><button type="button" data-rb-action="fullscreen" aria-pressed="false">Full screen</button><a class="rb-original" data-rb-pdf href="${PDF}" >Download PDF</a></div><div class="rb-layout" data-sidebar="false"><aside class="rb-sidebar" id="rulebook-sidebar" hidden><label class="rb-search"><span>Find a rule</span><input type="search" data-rb-search placeholder="Heat, formation, weapon…" autocomplete="off"></label><div data-rb-results></div></aside><div class="rb-reading"><p class="rb-context" data-rb-context hidden></p><div class="rb-viewport" tabindex="0" aria-label="Rulebook page. Double-click or double-tap to enter or leave full screen." title="Double-click or double-tap for full screen"><article class="rb-paper"></article></div></div></div><footer class="rb-footer"><span data-rb-status role="status" aria-live="polite"></span><span>Of Oil and Iron · Scott Hadley / Scoutsifer Studio</span></footer>`;
   document.body.append(dialog);document.body.classList.add('rulebook-open');view=dialog.querySelector('.rb-viewport');paper=dialog.querySelector('.rb-paper');sidebar=dialog.querySelector('.rb-sidebar');
   dialog.addEventListener('cancel',event=>{event.preventDefault();close();});
   let startedOutside=false;
@@ -141,12 +168,15 @@
   dialog.addEventListener('pointerup',event=>{if(startedOutside&&outside(event)){event.preventDefault();event.stopPropagation();startedOutside=false;backdropClick={x:event.clientX,y:event.clientY,time:performance.now()};close();}});
   dialog.addEventListener('click',event=>{
    if(startedOutside&&outside(event)){event.preventDefault();event.stopPropagation();close();return;}startedOutside=false;
+   const pdf=event.target.closest('[data-rb-pdf]');
+   if(pdf&&!pdf.dataset.pdfReady){event.preventDefault();preparePDF(pdf);return;}
    const button=event.target.closest('[data-rb-action]');
    if(button){
     const action=button.dataset.rbAction;if(action==='close'){close();return;}
     if(action==='contents'){setSidebar(sidebar.hidden);return;}
+    if(action==='fullscreen'){toggleFullScreen();return;}
     if(action==='previous'||action==='next'){show(current+(action==='next'?1:-1));return;}
-    if(action==='zoom-in'||action==='zoom-out'||action==='fit'){zoom=action==='fit'?1:Math.max(1,Math.min(4,zoom+(action==='zoom-in'?.25:-.25)));resizePaper();return;}
+    if(action==='zoom-in'||action==='zoom-out'||action==='fit'){zoom=action==='fit'?1:Math.max(.5,Math.min(4,zoom+(action==='zoom-in'?.25:-.25)));resizePaper();return;}
     if(action==='back'&&navHistory.length){const previous=navHistory.pop();zoom=previous.zoom;show(previous.index,{query:previous.query,box:previous.box,push:false});return;}
    }
    const jump=event.target.closest('[data-rb-jump]');if(jump){show(Number(jump.dataset.rbJump),{query:jump.dataset.rbQuery||'',autoZoom:true});setSidebar(false);return;}
@@ -155,7 +185,36 @@
   dialog.addEventListener('change',event=>{if(event.target.matches('[data-rb-page]'))show(Number(event.target.value));});
   let searchTimer;
   dialog.addEventListener('input',event=>{if(event.target.matches('[data-rb-search]')){lastSearch=event.target.value;clearTimeout(searchTimer);searchTimer=setTimeout(drawSidebar,120);}});
-  dialog.addEventListener('keydown',event=>{if(event.target.matches('input,select,textarea'))return;if(event.key==='ArrowLeft'&&current>1){event.preventDefault();show(current-1);}if(event.key==='ArrowRight'&&current<DATA.pageCount){event.preventDefault();show(current+1);}});
+  dialog.addEventListener('keydown',event=>{if(event.key==='Escape'&&fullScreen){event.preventDefault();event.stopPropagation();toggleFullScreen(false);return;}if(event.target.matches('input,select,textarea'))return;if(event.key==='ArrowLeft'&&current>1){event.preventDefault();show(current-1);}if(event.key==='ArrowRight'&&current<DATA.pageCount){event.preventDefault();show(current+1);}});
+  // Double taps are handled separately from swipes and panning. Native mobile
+  // dblclick events following the same gesture are ignored to avoid toggling twice.
+  const readingTarget=target=>!target.closest('a,button,input,select,textarea');
+  view.addEventListener('dblclick',event=>{if(!readingTarget(event.target)||performance.now()-lastTouchToggle<600||performance.now()-lastPinchTime<500)return;event.preventDefault();toggleFullScreen();});
+  let pinch=null;
+  view.addEventListener('touchstart',event=>{
+   if(event.touches.length!==2){if(event.touches.length>2)pinch=null;return;}
+   const [a,b]=event.touches,rect=view.getBoundingClientRect(),x=(a.clientX+b.clientX)/2-rect.left,y=(a.clientY+b.clientY)/2-rect.top;
+   pinch={distance:Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY),zoom,x:(view.scrollLeft+x-paper.offsetLeft)/(paper.offsetWidth||1),y:(view.scrollTop+y-paper.offsetTop)/(paper.offsetHeight||1)};
+   lastPinchTime=performance.now();event.preventDefault();
+  },{passive:false});
+  view.addEventListener('touchmove',event=>{
+   if(!pinch||event.touches.length!==2)return;
+   event.preventDefault();const [a,b]=event.touches,rect=view.getBoundingClientRect(),x=(a.clientX+b.clientX)/2-rect.left,y=(a.clientY+b.clientY)/2-rect.top;
+   zoom=Math.max(.5,Math.min(4,pinch.zoom*Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY)/Math.max(1,pinch.distance)));
+   resizePaper(false);view.scrollLeft=paper.offsetLeft+pinch.x*paper.offsetWidth-x;view.scrollTop=paper.offsetTop+pinch.y*paper.offsetHeight-y;lastPinchTime=performance.now();
+  },{passive:false});
+  const endPinch=event=>{if(pinch&&event.touches.length<2){pinch=null;lastPinchTime=performance.now();}};
+  view.addEventListener('touchend',endPinch,{passive:true});view.addEventListener('touchcancel',endPinch,{passive:true});
+  let tap=null,lastTap=null;
+  view.addEventListener('touchstart',event=>{tap=event.touches.length===1&&readingTarget(event.target)?{x:event.touches[0].clientX,y:event.touches[0].clientY,time:performance.now(),top:view.scrollTop,left:view.scrollLeft}:null;if(event.touches.length!==1)lastTap=null;},{passive:true});
+  view.addEventListener('touchmove',event=>{if(!tap||event.touches.length!==1){tap=null;return;}const t=event.touches[0];if(Math.hypot(t.clientX-tap.x,t.clientY-tap.y)>12)tap=null;},{passive:true});
+  view.addEventListener('touchend',event=>{
+   const start=tap;tap=null;if(!start||!event.changedTouches.length||!view)return;
+   const t=event.changedTouches[0],now=performance.now();
+   if(now-start.time>350||Math.hypot(t.clientX-start.x,t.clientY-start.y)>12||Math.abs(view.scrollTop-start.top)>6||Math.abs(view.scrollLeft-start.left)>6){lastTap=null;return;}
+   if(lastTap&&now-lastTap.time<360&&Math.hypot(t.clientX-lastTap.x,t.clientY-lastTap.y)<28){event.preventDefault();lastTap=null;lastTouchToggle=now;toggleFullScreen();}
+   else lastTap={x:t.clientX,y:t.clientY,time:now};
+  },{passive:false});
   let touch=null;
   view.addEventListener('touchstart',event=>{touch=event.touches.length===1&&zoom===1?{x:event.touches[0].clientX,y:event.touches[0].clientY}:null;},{passive:true});
   view.addEventListener('touchend',event=>{const start=touch;touch=null;if(!start||!event.changedTouches.length||zoom!==1)return;const t=event.changedTouches[0],dx=t.clientX-start.x,dy=t.clientY-start.y;if(Math.abs(dx)>75&&Math.abs(dx)>Math.abs(dy)*2){const index=current+(dx<0?1:-1);if(pageAt(index))show(index);}},{passive:true});
@@ -163,7 +222,7 @@
   if(typeof dialog.showModal==='function')dialog.showModal();else dialog.setAttribute('open','');
   show(target,{query,push:false,autoZoom:!!page});dialog.querySelector('[data-rb-action="close"]').focus({preventScroll:true});
  }
- API.open=open;API.close=close;API.linkify=linkify;API.pageIndex=pageIndex;API.bestBlock=bestBlock;API.getState=()=>dialog?{index:current,page:pageAt(current).number,zoom,query:focusLabel,highlight:focusBox,history:navHistory.length}:null;
+ API.open=open;API.close=close;API.toggleFullScreen=toggleFullScreen;API.linkify=linkify;API.pageIndex=pageIndex;API.bestBlock=bestBlock;API.getState=()=>dialog?{index:current,page:pageAt(current).number,zoom,query:focusLabel,highlight:focusBox,history:navHistory.length,fullScreen}:null;
  // Consume the compatibility click generated after an outside touch releases,
  // before it can reach a game control behind the now-closed dialog.
  window.addEventListener('click',event=>{const g=backdropClick;if(!g)return;backdropClick=null;if(performance.now()-g.time<650&&Math.abs(event.clientX-g.x)<32&&Math.abs(event.clientY-g.y)<32){event.preventDefault();event.stopImmediatePropagation();}},true);

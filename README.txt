@@ -1,40 +1,47 @@
-OF OIL & IRON COMPANION — v0.28.32
-COMPLETE RULEBOOK AND CLICKABLE REFERENCES
+OF OIL & IRON COMPANION — v0.28.33
+RULEBOOK READING AND DOWNLOAD UPDATE
 
-The main menu now includes a Rulebook button. Read all 121 pages of the supplied
-Of Oil and Iron Rulebook V1, including its covers and illustrations. Contents,
-whole-book text search, page selection, previous/next, Back and 100–400% zoom
-are included. Swipe pages at fit width on a touchscreen; pan while zoomed in.
-The Original PDF link opens the exact supplied file, without modifications.
+Open Rulebook in the main menu, or click a printed page reference in the app.
+The page selector now shows page numbers only. Contents / Search keeps the
+complete chapter index and whole-book text search. All 121 pages are included.
 
-The reader opens as a floating window only after an explicit click or tap.
-Its X stays visible while scrolling. Close it with X, Escape, or a click/tap
-outside the window. The current game, inputs and underlying scroll position
-are retained. Outside touches do not click controls behind the closing window.
+Double-click or double-tap the page to fill the screen. Repeat to restore the
+floating window and its previous zoom and reading position. The X remains at
+the top right in both modes. Escape leaves full-screen reading first; in the
+floating window it closes the reader. Clicking or tapping outside also closes
+the floating window. Your game and underlying scroll position are preserved.
 
-Printed page references throughout the app now open the correct numbered page.
-Where the surrounding text identifies a rule or item, the relevant passage is
-highlighted and brought into view. Deployment references identify the selected
-diagram; battlefield references identify the chosen terrain's reward row.
-Profiles, weapons, formation, lore, campaign, Aftermath, dynamic warnings and
-future rendered references use the same link handler. References printed inside
-the rulebook are linked too. Ranges open at their first page, with normal
-navigation available for the rest of the range.
+On touchscreens, pinch with two fingers to zoom the BOOK PAGE from 50–400%.
+The dialog, controls and X do not scale. Drag with one finger to pan a zoomed
+page. At fit width, horizontal swipes turn pages. Desktop zoom buttons and the
+Full screen button remain available in the floating view.
 
-The PDF's initial three unnumbered pages are accounted for: printed p.1 is PDF
-page 4, printed p.89 is PDF page 92. Page controls show the printed numbers.
-Reader pages are loaded individually for reliable mobile and local-file use.
-The full-size PDF is loaded only if Original PDF is explicitly selected.
+DOWNLOAD PDF
+Download PDF prepares the complete 121-page PDF and downloads it. If a browser
+requires another deliberate click, the same button becomes a ready download
+link. The downloadable copy is approximately 20 MB: image objects have been
+recompressed, while every page's text and the page order are preserved. The
+reader's separate 2000-pixel page images remain unchanged. The original source
+PDF is not modified. PDF data loads only when requested, from small local
+assets in rulebook/pdf-data. This also works from file:// without a server.
+rulebook-pdf.html provides an independent download fallback. Legacy PDF URLs
+are redirected to that page on Netlify by the included _redirects file.
 
 UPDATE
-Copy the ENTIRE archive into the existing project, including rulebook/,
-rulebook.js, rulebook.css, index.html and app.js. Commit and Sync as usual,
-then check the v0.28.32 header. The archive is larger because it includes the
-complete rulebook. Keep the site's address and browser data for local saves.
-Open index.html to test the local copy without a server.
+Extract and copy the ENTIRE archive into the app project, including rulebook/,
+all new PDF download files, _redirects and index.html. In an existing project,
+remove the obsolete rulebook/of-oil-and-iron-rulebook-v1.pdf file from v0.28.32;
+it is replaced by the small PDF data assets. Commit and Sync as usual, then
+check that the app header displays v0.28.33. Open index.html for a local test.
+Keep the same site address and browser data for existing local saves.
 
-The v0.28.31 dynamic generator, faction and common-weapon restrictions,
-formations, campaign budgets, battle logic, local saves, graphics, original
-Rig images and entry sequence are retained. The Rig sheet PDF layout is
-unchanged; its footer displays the new app version. No deployment is performed
-by this update. See VERIFICA-v0.28.32.txt and the historical CHANGELOG.txt.
+The dynamic generator, gameplay, Quick game, campaign, save format, Rig images
+and entry sequence are retained. The Rig-sheet PDF layout is unchanged; its
+footer displays the new version. See VERIFICA-v0.28.33.txt for the checks run.
+This archive does not perform a deployment.
+
+REBUILDING MANUAL ASSETS (optional, developer use)
+With PyMuPDF and Pillow installed, tools/build-rulebook-assets.py renders the
+reader pages and index from the supplied Rulebook V1. Then run
+tools/prepare-rulebook-pdf.py with that same original PDF to prepare the small
+PDF download assets. Normal installation does not require these tools.
