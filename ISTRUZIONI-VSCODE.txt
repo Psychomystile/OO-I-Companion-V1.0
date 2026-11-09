@@ -1,22 +1,21 @@
-AGGIORNAMENTO v0.28.31 — GENERATORE DINAMICO
+AGGIORNAMENTO v0.28.32 — RULEBOOK
 
-1. Estrai lo ZIP e copia TUTTO il suo contenuto nel progetto dell’app.
-2. Includi il nuovo roster-engine.js insieme a roster-generator.js e agli
-   altri file. Le immagini e la sequenza iniziale sono tutte comprese.
-3. In VS Code salva, fai Commit e Sync come negli aggiornamenti precedenti.
-4. Dopo il consueto deploy, riapri l’app: in alto deve comparire v0.28.31.
+1. Estrai lo ZIP e copia TUTTO il contenuto nel progetto dell’app.
+2. Includi tutta la cartella rulebook, rulebook.js, rulebook.css e gli altri file
+   aggiornati. La cartella contiene tutte le pagine e il PDF originale.
+3. Salva in VS Code, fai Commit e Sync come negli aggiornamenti precedenti.
+4. Dopo il consueto deploy, riapri l’app: deve comparire v0.28.32.
 
-La vecchia cartella roster-data non viene più caricata dal generatore.
-Può restare nel progetto oppure essere rimossa. Non cancellare i dati del
-browser: le squadre e le campagne esistenti restano compatibili.
+Nel menu principale premi Rulebook. Per consultare una regola citata nell’app,
+clicca o tocca il riferimento alla pagina. Il manuale si apre solo su richiesta.
+Chiudi con la X sempre visibile oppure toccando/cliccando fuori dalla finestra.
+Tornerai alla schermata e alla posizione in cui eri.
 
-Generate roster compare dopo la scelta della fazione, sotto il riepilogo
-Quick game / Campaign squadron e prima della selezione dei Rig. Scegli
-Formation e Style, poi Generate proposal. Controlla la proposta e premi
-Use this squadron solo se vuoi applicarla. I Rig restano modificabili.
-Engagement, lato e terreno si impostano in Game setup e non vengono cambiati.
-Una campagna già avviata continua dall’hangar e non viene sovrascritta.
+Il lettore include indice, ricerca, cambio pagina e zoom. I numeri seguono quelli
+stampati nel manuale. Original PDF apre il file allegato completo e invariato.
+L’archivio è più grande perché comprende tutto il regolamento.
 
-Per aprire la copia locale, tieni insieme tutti i file e apri index.html
-nel browser. Il generatore funziona anche senza un server locale.
-Non viene pubblicato alcun aggiornamento da questa conversazione.
+Non cancellare i dati del browser: squadre e campagne restano compatibili.
+Per aprire la copia locale, mantieni insieme tutti i file e apri index.html.
+Il generatore dinamico rimane disponibile, con tutti i vincoli di fazione,
+formazione, armi, Iron e campagna già introdotti nella v0.28.31.

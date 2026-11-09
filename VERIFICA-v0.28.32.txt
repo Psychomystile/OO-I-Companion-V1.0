@@ -1,0 +1,29 @@
+VERIFICA v0.28.32 — RULEBOOK COMPLETO
+
+- Tutte le 121 pagine sono comprese, renderizzate e caricate nel browser.
+- PDF originale preservato byte per byte, con SHA-256 identico all’allegato.
+- Numerazione verificata: pagina 1 = pagina PDF 4; pagina 89 = PDF 92.
+- Pulsante Rulebook nel menu principale; apertura solo su clic o tocco.
+- Citazioni p., pp., intervalli, maiuscole e contenuti dinamici diventano
+  collegamenti. Le etichette P1/P2 dei giocatori restano semplici etichette.
+- Collegamenti verificati per tutti i 24 profili dei Rig, armi, formazione,
+  campagna, riferimenti dinamici e citazioni interne al manuale.
+- Ricerca su tutto il testo, indice, pagina, avanti/indietro, Back,
+  evidenziazione del passaggio e zoom verificati.
+- Il terreno selezionato raggiunge la sua riga nella tabella di pagina 103.
+  Deployment 6 raggiunge il suo diagramma specifico a pagina 93.
+- X sempre presente durante scorrimento e zoom. Chiudono anche Escape,
+  clic esterno e tocco esterno, usando le coordinate reali del tocco.
+- Il clic generato dopo un tocco esterno viene intercettato prima che possa
+  attivare un comando di gioco dietro la finestra appena chiusa.
+- Stato della partita e posizione di scorrimento conservati dopo la chiusura.
+- Otto larghezze: 320, 359, 393, 600, 768, 820, 1024, 1440 CSS px.
+- Verificati anche 852×393, 1024×600 e 320×568, con layout orizzontale o ridotto.
+- Apertura locale file:// verificata senza server né servizi esterni.
+- Generatore dinamico e download effettivo del PDF dei Rig funzionanti.
+- Nessun errore JavaScript o risorsa mancante nelle prove concluse.
+
+Le prove usano Chromium 153 con viewport e touchscreen emulati. Non sono prove
+fisiche di ogni modello di telefono o del browser Safari. Dati e regole di gioco,
+matematica del generatore, salvataggi e immagini dei Rig restano quelli della
+v0.28.31. Nessun deploy è stato eseguito.
