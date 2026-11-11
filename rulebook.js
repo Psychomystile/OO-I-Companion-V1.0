@@ -1,7 +1,7 @@
-/* Of Oil & Iron v0.28.34 — read-only book, compact controls and layered dismissal. */
+/* Of Oil & Iron v0.28.35 — read-only book, compact controls and layered dismissal. */
 (() => {
  'use strict';
- const API=globalThis.OOIRulebook={version:'0.28.34'};
+ const API=globalThis.OOIRulebook={version:'0.28.35'};
  const DATA=globalThis.OOIRulebookData;
  const READER='index.html?rulebook=1';
  const REF=/\b(?:(?:Rulebook(?:\s+V1)?\s*[,·:]?\s*)(?:pp?\.?|pages?)\s*|(?:pp?\.|pages?\b)\s*|pp?\s+)(\d{1,3})(?:\s*([–—-])\s*(\d{1,3}))?/gi;
@@ -25,6 +25,18 @@
  }
  function bestBlock(p,query){
   const phrase=normal(query),terms=tokens(query);if(!phrase||!terms.length)return null;
+  // Two Engagements share each page: resolve the selected mission's rules,
+  // keeping the other mission and the decorative title outside the target.
+  if(p.number>=95&&p.number<=100){
+   const headings=p.blocks.filter(b=>/^(?:SPECIAL\s+)?ENGAGEMENT\s*:/i.test(b.text.trim())).sort((a,b)=>a.box[1]-b.box[1]);
+   const i=headings.findIndex(b=>normal(b.text.replace(/^(?:SPECIAL\s+)?ENGAGEMENT\s*:\s*/i,''))===phrase);
+   if(i>=0){
+    const top=headings[i].box[3],bottom=headings[i+1]?.box[1]??.93;
+    const blocks=p.blocks.filter(b=>b.box[1]>=top&&b.box[3]<=bottom);
+    const rules=blocks.find(b=>normal(b.text)==='battlefield and deployment');
+    if(blocks.length)return region(rules?blocks.filter(b=>b.box[1]>=rules.box[1]-.001):blocks);
+   }
+  }
   let best=null,score=0;
   for(const b of p.blocks){const text=normal(b.text),first=normal(b.text.trim().split('\n')[0].replace(/^\d+[.)]\s*/,''));let n=text.includes(phrase)?12:0;if(first===phrase)n+=4;for(const word of terms)if(text.includes(word))n+=1+Math.min(1,word.length/10);if(n>0&&text.length<150)n+=.3;if(n>score){score=n;best=b;}}
   if(score<1.2)return null;

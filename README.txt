@@ -1,4 +1,13 @@
-OF OIL & IRON COMPANION — v0.28.34
+OF OIL & IRON COMPANION — v0.28.35
+ENGAGEMENT REFERENCES
+
+In Game setup, Rulebook p. 95–100 is displayed beside Random Engagement.
+The link follows the selected Engagement, including manual and random choices,
+in both Quick game and campaign. Clicking it opens that mission’s actual rules
+in the existing read-only viewer, including the correct half of shared pages.
+Changing the Engagement never opens the rulebook automatically. The link is
+also available when campaign setup is locked during an ongoing Engagement.
+
 COMPACT READ-ONLY RULEBOOK
 
 The complete 121-page rulebook remains readable inside the app. The circled
@@ -34,6 +43,6 @@ rulebook-data.js, rulebook.js, rulebook.css, index.html, rulebook-pdf.html and
 _redirects. For an existing v0.28.32/v0.28.33 project, remove obsolete manual
 PDF files, rulebook/pdf-data/, rulebook-pdf.js, rulebook-pdf-page.js and
 tools/prepare-rulebook-pdf.py. They are no longer used by the app.
-Commit and Sync as usual, then check the v0.28.34 header. Keep the same site
+Commit and Sync as usual, then check the v0.28.35 header. Keep the same site
 address and browser data for existing saves. Open index.html for a local test.
-No deployment is performed by this archive. See VERIFICA-v0.28.34.txt.
+No deployment is performed by this archive. See VERIFICA-v0.28.35.txt.

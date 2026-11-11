@@ -1,0 +1,21 @@
+VERIFICA v0.28.35 — COLLEGAMENTO INGAGGIO SELEZIONATO
+
+- Provate tutte le 12 scelte manuali in Quick game e campagna: 24 aperture.
+- Provati tutti i 12 possibili risultati di Random in ciascuna modalità:
+  24 risultati controllati, con aggiornamento immediato di pagina e argomento.
+- Riferimento corretto alle pagine 95–100 e alla sezione del singolo ingaggio:
+  esclusi titolo decorativo e ingaggio vicino sulla stessa pagina.
+- L’apertura avviene solo su clic/tocco. Nessuna apertura automatica quando
+  cambia l’ingaggio; stato partita conservato alla chiusura del regolamento.
+- Link utilizzabile anche quando la selezione è bloccata durante la campagna.
+- Random e link restano affiancati nelle otto larghezze provate:
+  320, 359, 393, 600, 768, 820, 1024 e 1440 CSS px.
+- Salvataggio/ripristino della scelta dopo ricarica e apertura locale file://.
+- Ricontrollati lettore completo (121 pagine), 24 profili Rig, citazioni,
+  ricerca, indice, zoom, X e ritorno alla finestra flottante.
+- Ripetuti controlli generali del generatore/Quick game e ciclo campagna,
+  comprese attivazioni, Maintenance, PDF Rig, Aftermath, inventario e backup.
+- Motore del generatore, regole e immagini originali conservati.
+- Sintassi, risorse iniziali e integrità ZIP verificate.
+
+Prove con Chromium 153, viewport e input touch emulati; nessun deploy eseguito.

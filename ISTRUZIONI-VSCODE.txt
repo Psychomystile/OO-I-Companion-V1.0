@@ -1,4 +1,4 @@
-AGGIORNAMENTO COMPLETO v0.28.34
+AGGIORNAMENTO COMPLETO v0.28.35
 
 1. Estrai lo ZIP e copia TUTTO il contenuto nel progetto dell’app.
 2. Includi rulebook/pages/, rulebook/rulebook-data.js, rulebook.js,
@@ -9,7 +9,12 @@ AGGIORNAMENTO COMPLETO v0.28.34
    tools/rulebook-pdf-check.json e gli eventuali PDF in rulebook/.
    Mantieni rulebook/pages/ e vendor/: servono al lettore e alle schede Rig.
 4. Salva, fai Commit e Sync come negli aggiornamenti precedenti.
-5. Dopo il consueto deploy controlla che l’app mostri v0.28.34.
+5. Dopo il consueto deploy controlla che l’app mostri v0.28.35.
+
+Nuovo collegamento:
+In Game setup, accanto a Random Engagement, trovi Rulebook p. con la pagina
+dell’ingaggio selezionato. Si aggiorna sia con la scelta manuale sia con Random,
+in Quick game e in campagna, e apre direttamente le regole di quell’ingaggio.
 
 Nel regolamento:
 - Rimossa la fascia con frecce/selettore pagina e la barra del passaggio citato.

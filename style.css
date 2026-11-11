@@ -233,3 +233,6 @@ body.has-floating-game-bar #notice{bottom:calc(105px + env(safe-area-inset-botto
 .pdf-button-label{grid-area:1/1}
 .pilot-battle-header>strong{overflow-wrap:anywhere}
 .pilot-battle-header .badge{display:inline-block;max-width:100%;white-space:normal;overflow-wrap:anywhere}
+
+/* Keep the selected Engagement reference beside its random selector. */
+.engagement-actions{display:flex;align-items:center;gap:12px;min-width:0;max-width:100%}.engagement-actions>button{min-width:0;flex:0 1 auto;white-space:normal}.engagement-rulebook{display:inline-flex;align-items:center;flex:0 0 auto;min-height:44px;font-size:.875rem;white-space:nowrap}

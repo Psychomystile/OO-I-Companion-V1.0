@@ -1,3 +1,14 @@
+v0.28.35 — SELECTED ENGAGEMENT RULEBOOK LINK
+
+Game setup now displays a Rulebook link beside Random Engagement. Its page
+and topic follow all 12 Engagement choices, whether selected manually or at
+random, in both Quick game and campaign. The same reader opens only on click.
+Each reference targets that mission's rules on printed pp. 95–100, excluding
+the neighbouring mission and decorative title on the shared page. The link
+remains usable while campaign setup is locked during an Engagement.
+Responsive layout keeps the link next to Random on phone/tablet/desktop.
+Gameplay, generator, saves, original images and other reader controls retained.
+
 v0.28.34 — COMPACT READ-ONLY RULEBOOK
 
 Removed the page-picker/arrow strip, passage-label banner and manual PDF
